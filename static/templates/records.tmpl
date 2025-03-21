@@ -29,31 +29,9 @@
 
 <section>
     <article id="article">
-<!--
-        <b>Total number of DOIs: {{.NDocuments}}</b>
--->
-        <br/>
-        <br/>
-        <br/>
-<form action="{{.Base}}/search" method="post" name="search" id="search" class="form">
-<div class="grid">
-    <div class="column column-2">
-    </div>
-    <div class="column column-6">
-        <input class="input"
-               type="text"
-               id="doi"
-               name="doi"
-               placeholder="DOI identifier">
-    </div>
-    <div class="column column-2">
-        <button class="button button-primary">Search</button>
-    </div>
-    <div class="column column-2">
-    </div>
-</div>
 
-</form>
+        <h2>FOXDEN DOIs</h2>
+        {{.Content}}
 
     </article>
 </section>

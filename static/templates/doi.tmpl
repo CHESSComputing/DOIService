@@ -14,14 +14,13 @@
 <header id="header">
     <div class="grid">
         <div class="column column-4">
-            <a href="{{.Base}}/" title="Home" class="button button-small"><img src="https://cdn.onlinewebfonts.com/svg/img_572071.png" alt="Home" style="width:20px;"></a>
-        </div>
-        <div class="huge column column-4">
-                FOXDEN DOI repository
         </div>
         <div class="column column-4">
-            <a href="https://chesscomputing.github.io/FOXDEN" title="Documentation" class="button button-small">Docs</a>
-            <a href="https://github.com/CHESSComputing/FOXDEN/issues" title="GitHub issue" class="button button-small">New issue</a>
+            <div class="huge">
+                FOXDEN DOI repository
+            </div>
+        </div>
+        <div class="column column-4">
         </div>
     </div>
 
@@ -29,31 +28,14 @@
 
 <section>
     <article id="article">
-<!--
-        <b>Total number of DOIs: {{.NDocuments}}</b>
--->
-        <br/>
-        <br/>
-        <br/>
-<form action="{{.Base}}/search" method="post" name="search" id="search" class="form">
-<div class="grid">
-    <div class="column column-2">
-    </div>
-    <div class="column column-6">
-        <input class="input"
-               type="text"
-               id="doi"
-               name="doi"
-               placeholder="DOI identifier">
-    </div>
-    <div class="column column-2">
-        <button class="button button-primary">Search</button>
-    </div>
-    <div class="column column-2">
-    </div>
-</div>
 
-</form>
+<h2>DOI: {{.DOI}}</h2>
+<b>Published:</b> {{.Published}}
+<br/>
+<b>Metadata:</b>
+<pre>
+{{.Metadata}}
+</pre>
 
     </article>
 </section>
