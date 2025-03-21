@@ -37,9 +37,7 @@ func DOIHandler(c *gin.Context) {
 		log.Fatal("FOXDEN configuration does not provide DOI.DocumentDir")
 	}
 	doi := c.Param("doi")
-	log.Println("### doi", doi)
 	fullPath := filepath.Join(staticDir, doi)
-	log.Println("### fullPath", fullPath)
 
 	// Serve static file
 	c.File(fullPath)
