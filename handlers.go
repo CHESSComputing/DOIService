@@ -8,6 +8,7 @@ import (
 	"embed"
 	"log"
 	"net/http"
+	"os"
 	"path/filepath"
 
 	srvConfig "github.com/CHESSComputing/golib/config"
@@ -31,7 +32,6 @@ func MainHandler(c *gin.Context) {
 
 // DOIHandler provides access to GET /DOI/123 end-point
 func DOIHandler(c *gin.Context) {
-	// Define the directory to serve
 	staticDir := srvConfig.Config.DOI.DocumentDir
 	if staticDir == "" {
 		log.Fatal("FOXDEN configuration does not provide DOI.DocumentDir")
@@ -39,7 +39,25 @@ func DOIHandler(c *gin.Context) {
 	doi := c.Param("doi")
 	fullPath := filepath.Join(staticDir, doi)
 
-	// Serve static file
+	// Check if the path is a directory
+	fileInfo, err := os.Stat(fullPath)
+	if err != nil {
+		c.String(http.StatusNotFound, "File or directory not found")
+		return
+	}
+
+	if fileInfo.IsDir() {
+		// Serve index.html if it exists in the directory
+		indexFile := filepath.Join(fullPath, "index.html")
+		if _, err := os.Stat(indexFile); err == nil {
+			c.File(indexFile)
+			return
+		}
+		c.String(http.StatusNotFound, "index.html not found in directory")
+		return
+	}
+
+	// Serve the requested file
 	c.File(fullPath)
 }
 
