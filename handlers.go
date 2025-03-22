@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	srvConfig "github.com/CHESSComputing/golib/config"
+	doiSrv "github.com/CHESSComputing/golib/doi"
 	server "github.com/CHESSComputing/golib/server"
 	"github.com/gin-gonic/gin"
 )
@@ -37,7 +38,7 @@ func MainHandler(c *gin.Context) {
 // DOIHandler provides access to GET /DOI/123 end-point
 func DOIHandler(c *gin.Context) {
 	doi := c.Param("doi")
-	records, err := getDOIData(doi)
+	records, err := doiSrv.GetData(doi)
 	if err != nil {
 		log.Println("ERROR: unable to find DOI records", err)
 		c.Data(http.StatusBadRequest, "text/html; charset=utf-8", []byte("unable to find DOI records"))
@@ -70,7 +71,7 @@ func SearchHandler(c *gin.Context) {
 		c.Data(http.StatusBadRequest, "text/html; charset=utf-8", []byte("DOI is required"))
 		return
 	}
-	records, err := getDOIData(doi)
+	records, err := doiSrv.GetData(doi)
 	if err != nil {
 		log.Println("ERROR: unable to find DOI records", err)
 		c.Data(http.StatusBadRequest, "text/html; charset=utf-8", []byte("unable to find DOI records"))
