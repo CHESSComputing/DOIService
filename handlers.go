@@ -9,14 +9,10 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"os"
-	"path/filepath"
 	"strings"
-	"time"
 
 	srvConfig "github.com/CHESSComputing/golib/config"
 	server "github.com/CHESSComputing/golib/server"
-	"github.com/CHESSComputing/golib/utils"
 	"github.com/gin-gonic/gin"
 )
 
@@ -40,34 +36,28 @@ func MainHandler(c *gin.Context) {
 
 // DOIHandler provides access to GET /DOI/123 end-point
 func DOIHandler(c *gin.Context) {
-	staticDir := srvConfig.Config.DOI.DocumentDir
-	if staticDir == "" {
-		log.Fatal("FOXDEN configuration does not provide DOI.DocumentDir")
-	}
 	doi := c.Param("doi")
-	fullPath := filepath.Join(staticDir, doi)
-
-	// Check if the path is a directory
-	_, err := os.Stat(fullPath)
+	records, err := getDOIData(doi)
 	if err != nil {
-		c.String(http.StatusNotFound, "File or directory not found")
+		log.Println("ERROR: unable to find DOI records", err)
+		c.Data(http.StatusBadRequest, "text/html; charset=utf-8", []byte("unable to find DOI records"))
 		return
 	}
-
-	// read meta data file if it exist
-	fname := filepath.Join(fullPath, "metadata.json")
-	bdata := utils.ReadJson(fname)
-	var published string
-	if ctime, err := utils.DirCreationDate(fullPath); err == nil {
-		published = ctime.Format(time.RFC1123)
+	if len(records) != 1 {
+		log.Println("ERROR: too many DOI records", records)
+		c.Data(http.StatusBadRequest, "text/html; charset=utf-8", []byte("too many DOI records"))
+		return
 	}
+	rec := records[0]
 
 	tmpl := server.MakeTmpl(StaticFs, "doi")
 	base := srvConfig.Config.DOI.WebServer.Base
 	tmpl["Base"] = base
 	tmpl["DOI"] = doi
-	tmpl["Published"] = published
-	tmpl["Metadata"] = string(bdata)
+	tmpl["DID"] = rec.Did
+	tmpl["Description"] = rec.Description
+	tmpl["Published"] = rec.Published
+	tmpl["Metadata"] = rec.Metadata
 	content := server.TmplPage(StaticFs, "doi.tmpl", tmpl)
 	c.Data(http.StatusOK, "text/html; charset=utf-8", []byte(content))
 }
@@ -80,26 +70,18 @@ func SearchHandler(c *gin.Context) {
 		c.Data(http.StatusBadRequest, "text/html; charset=utf-8", []byte("DOI is required"))
 		return
 	}
-
-	// Construct the full path
-	fullPath := filepath.Join(srvConfig.Config.DOI.DocumentDir, doi)
-
-	// Check if the directory exists
-	if !utils.DirExists(fullPath) {
-		msg := fmt.Sprintf("DOI %s not found", doi)
-		c.Data(http.StatusBadRequest, "text/html; charset=utf-8", []byte(msg))
+	records, err := getDOIData(doi)
+	if err != nil {
+		log.Println("ERROR: unable to find DOI records", err)
+		c.Data(http.StatusBadRequest, "text/html; charset=utf-8", []byte("unable to find DOI records"))
 		return
 	}
-
-	// Find matches for our doi pattern
 	var out []string
-	if matches, err := utils.FindMatchingDirectories(srvConfig.Config.DOI.DocumentDir, doi); err == nil {
-		for _, m := range matches {
-			s := strings.Replace(m, srvConfig.Config.DOI.DocumentDir, "", -1)
-			r := fmt.Sprintf("<b>DOI:</b> <a href=\"/doi/%s\">%s</a>", s, s)
-			out = append(out, r)
-		}
+	for _, r := range records {
+		link := fmt.Sprintf("<b>DOI:</b> <a href=\"/doi/%s\">%s</a>", r.Doi, r.Doi)
+		out = append(out, link)
 	}
+
 	tmpl := server.MakeTmpl(StaticFs, "doi")
 	base := srvConfig.Config.DOI.WebServer.Base
 	tmpl["Base"] = base
