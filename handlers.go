@@ -38,6 +38,10 @@ func MainHandler(c *gin.Context) {
 // DOIHandler provides access to GET /DOI/123 end-point
 func DOIHandler(c *gin.Context) {
 	doi := c.Param("doi")
+	// the URI param contains slash prefix which we should strip off
+	if strings.HasPrefix(doi, "/") {
+		doi = strings.TrimPrefix(doi, "/")
+	}
 	records, err := doiSrv.GetData(doi)
 	if err != nil {
 		log.Println("ERROR: unable to find DOI records", err)
@@ -71,7 +75,8 @@ func SearchHandler(c *gin.Context) {
 		c.Data(http.StatusBadRequest, "text/html; charset=utf-8", []byte("DOI is required"))
 		return
 	}
-	records, err := doiSrv.GetData(doi)
+	pat := "%" + doi + "%"
+	records, err := doiSrv.GetData(pat)
 	if err != nil {
 		log.Println("ERROR: unable to find DOI records", err)
 		c.Data(http.StatusBadRequest, "text/html; charset=utf-8", []byte("unable to find DOI records"))
