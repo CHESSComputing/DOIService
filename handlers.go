@@ -115,16 +115,18 @@ func SearchHandler(c *gin.Context) {
 		c.Data(http.StatusBadRequest, "text/html; charset=utf-8", []byte("unable to find DOI records"))
 		return
 	}
-	var out []string
+	content := "<ul>"
 	for _, r := range records {
-		link := fmt.Sprintf("<b>DOI:</b> <a href=\"/doi/%s\">%s</a>", r.Doi, r.Doi)
-		out = append(out, link)
+		link := fmt.Sprintf("<a href=\"/doi/%s\">%s</a>: %s", r.Doi, r.Doi, r.Description)
+		content += fmt.Sprintf("\n<li>%s</li>", link)
 	}
+	content += "</ul>"
 
 	tmpl := server.MakeTmpl(StaticFs, "doi")
 	base := srvConfig.Config.DOI.WebServer.Base
 	tmpl["Base"] = base
-	tmpl["Content"] = strings.Join(out, "<br/>")
-	content := server.TmplPage(StaticFs, "records.tmpl", tmpl)
-	c.Data(http.StatusOK, "text/html; charset=utf-8", []byte(content))
+	tmpl["Query"] = doi
+	tmpl["Content"] = content
+	page := server.TmplPage(StaticFs, "records.tmpl", tmpl)
+	c.Data(http.StatusOK, "text/html; charset=utf-8", []byte(page))
 }
