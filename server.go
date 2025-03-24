@@ -7,8 +7,11 @@ package main
 import (
 	srvConfig "github.com/CHESSComputing/golib/config"
 	server "github.com/CHESSComputing/golib/server"
+	"github.com/CHESSComputing/golib/services"
 	"github.com/gin-gonic/gin"
 )
+
+var _httpReadRequest *services.HttpRequest
 
 // helper function to setup our router
 func setupRouter() *gin.Engine {
@@ -23,6 +26,8 @@ func setupRouter() *gin.Engine {
 
 // Server defines our HTTP server
 func Server() {
+	// initialize http request
+	_httpReadRequest = services.NewHttpRequest("read", 0)
 	// setup web router and start the service
 	r := setupRouter()
 	webServer := srvConfig.Config.DOI.WebServer

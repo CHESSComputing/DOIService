@@ -5,15 +5,21 @@ package main
 // Copyright (c) 2023 - Valentin Kuznetsov <vkuznet@gmail.com>
 //
 import (
+	"bytes"
 	"embed"
+	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"strings"
+	"time"
 
 	srvConfig "github.com/CHESSComputing/golib/config"
 	doiSrv "github.com/CHESSComputing/golib/doi"
 	server "github.com/CHESSComputing/golib/server"
+	services "github.com/CHESSComputing/golib/services"
+	utils "github.com/CHESSComputing/golib/utils"
 	"github.com/gin-gonic/gin"
 )
 
@@ -61,8 +67,35 @@ func DOIHandler(c *gin.Context) {
 	tmpl["DOI"] = doi
 	tmpl["DID"] = rec.Did
 	tmpl["Description"] = rec.Description
-	tmpl["Published"] = rec.Published
-	tmpl["Metadata"] = rec.Metadata
+	tmpl["Published"] = time.Unix(rec.Published, 0).Format(time.RFC3339)
+
+	if rec.AccessMetadata {
+		// look-up metadata from FOXDEN MetaData service
+		query := fmt.Sprintf("{\"did\":\"%s\"}", rec.Did)
+		req := services.ServiceRequest{
+			Client:       "foxden-DOIService",
+			ServiceQuery: services.ServiceQuery{Query: query},
+		}
+
+		data, err := json.Marshal(req)
+		rurl := fmt.Sprintf("%s/search", srvConfig.Config.Services.MetaDataURL)
+		_httpReadRequest.GetToken()
+		resp, err := _httpReadRequest.Post(rurl, "application/json", bytes.NewBuffer(data))
+		if err != nil {
+			log.Println("ERROR: unable to place request to MetaData service", err)
+			c.Data(http.StatusBadRequest, "text/html; charset=utf-8", []byte("unable to access MetaData service"))
+			return
+		}
+		defer resp.Body.Close()
+		data, err = io.ReadAll(resp.Body)
+		if err != nil {
+			log.Println("ERROR: unable to read MetaData service response", err)
+			c.Data(http.StatusBadRequest, "text/html; charset=utf-8", []byte("unable to read MetaData service response"))
+			return
+		}
+		tmpl["Metadata"] = string(utils.FormatJsonRecords(data))
+	}
+	// compose web page content
 	content := server.TmplPage(StaticFs, "doi.tmpl", tmpl)
 	c.Data(http.StatusOK, "text/html; charset=utf-8", []byte(content))
 }
