@@ -7,6 +7,6 @@ CREATE TABLE "dois" (
     "did" VARCHAR2(700) NOT NULL UNIQUE,
     "doi" VARCHAR2(700) NOT NULL UNIQUE,
     "description" TEXT,
-    "metadata" TEXT,
+    "metadata" BOOLEAN,
     "published" INTEGER
 );
