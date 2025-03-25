@@ -30,7 +30,19 @@
 <section>
     <article id="article">
 
-<h2>DOI: {{.DOI}}</h2>
+<h2>DOI:
+{{if .Public}}
+   <span class="doiPublic">(Public)</span>
+{{else}}
+   <span class="doiDraft">(Draft)</span>
+{{end}}
+</h2>
+{{if .Public}}
+<b>Record:</b> <a href="{{.DOIUrl}}">{{.DOI}}</a>
+{{else}}
+<b>Record:</b> {{.DOI}}
+{{end}}
+<br/>
 <b>DID:</b> {{.DID}}
 <br/>
 <b>Published:</b> {{.Published}}

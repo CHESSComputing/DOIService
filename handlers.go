@@ -66,7 +66,9 @@ func DOIHandler(c *gin.Context) {
 	tmpl["Base"] = base
 	tmpl["DOI"] = doi
 	tmpl["DID"] = rec.Did
+	tmpl["DOIUrl"] = rec.DoiUrl
 	tmpl["Description"] = rec.Description
+	tmpl["Public"] = rec.Public
 	tmpl["Published"] = time.Unix(rec.Published, 0).Format(time.RFC3339)
 
 	if rec.AccessMetadata {
@@ -117,7 +119,12 @@ func SearchHandler(c *gin.Context) {
 	}
 	content := "<ul>"
 	for _, r := range records {
-		link := fmt.Sprintf("<a href=\"/doi/%s\">%s</a>: %s", r.Doi, r.Doi, r.Description)
+		rtype := "Draft"
+		if r.Public {
+			rtype = "Public"
+		}
+		rlink := fmt.Sprintf("<span class=\"doi%s\">%s</span>", rtype, rtype)
+		link := fmt.Sprintf("<a href=\"/doi/%s\">%s</a> (%s): %s", r.Doi, r.Doi, rlink, r.Description)
 		content += fmt.Sprintf("\n<li>%s</li>", link)
 	}
 	content += "</ul>"
