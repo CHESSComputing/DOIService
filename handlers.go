@@ -124,6 +124,9 @@ func SearchHandler(c *gin.Context) {
 	if doi == "" {
 		pat = ""
 	}
+	if srvConfig.Config.DOI.WebServer.Verbose > 0 {
+		log.Printf("Search doi with pattern '%s'", pat)
+	}
 	records, err := doiSrv.GetData(pat)
 	if err != nil {
 		log.Println("ERROR: unable to find DOI records", err)
