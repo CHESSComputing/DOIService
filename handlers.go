@@ -8,6 +8,7 @@ import (
 	"bytes"
 	"embed"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -51,15 +52,29 @@ func DOIHandler(c *gin.Context) {
 	records, err := doiSrv.GetData(doi)
 	if err != nil {
 		log.Println("ERROR: unable to find DOI records", err)
-		c.Data(http.StatusBadRequest, "text/html; charset=utf-8", []byte("unable to find DOI records"))
+		rec := services.Response("DOIService", http.StatusBadRequest, services.BindError, err)
+		if c.Request.Header.Get("Accept") == "application/json" {
+			c.JSON(http.StatusBadRequest, rec)
+			return
+		}
+		c.Data(http.StatusBadRequest, "text/html; charset=utf-8", []byte(rec.String()))
 		return
 	}
 	if len(records) != 1 {
 		log.Println("ERROR: too many DOI records", records)
-		c.Data(http.StatusBadRequest, "text/html; charset=utf-8", []byte("too many DOI records"))
+		rec := services.Response("DOIService", http.StatusBadRequest, services.BindError, errors.New("too many DOI records"))
+		if c.Request.Header.Get("Accept") == "application/json" {
+			c.JSON(http.StatusBadRequest, rec)
+			return
+		}
+		c.Data(http.StatusBadRequest, "text/html; charset=utf-8", []byte(rec.String()))
 		return
 	}
 	rec := records[0]
+	if c.Request.Header.Get("Accept") == "application/json" {
+		c.JSON(http.StatusOK, records)
+		return
+	}
 
 	tmpl := server.MakeTmpl(StaticFs, "doi")
 	base := srvConfig.Config.DOI.WebServer.Base
@@ -104,17 +119,24 @@ func DOIHandler(c *gin.Context) {
 
 // SearchHandler processes the POST form request and redirects if DOI exists
 func SearchHandler(c *gin.Context) {
-	// Get the DOI value from the form
 	doi := c.PostForm("doi")
-	if doi == "" {
-		c.Data(http.StatusBadRequest, "text/html; charset=utf-8", []byte("DOI is required"))
-		return
-	}
 	pat := "%" + doi + "%"
+	if doi == "" {
+		pat = ""
+	}
 	records, err := doiSrv.GetData(pat)
 	if err != nil {
 		log.Println("ERROR: unable to find DOI records", err)
-		c.Data(http.StatusBadRequest, "text/html; charset=utf-8", []byte("unable to find DOI records"))
+		rec := services.Response("DOIService", http.StatusBadRequest, services.BindError, err)
+		if c.Request.Header.Get("Accept") == "application/json" {
+			c.JSON(http.StatusBadRequest, rec)
+			return
+		}
+		c.Data(http.StatusBadRequest, "text/html; charset=utf-8", []byte(rec.String()))
+		return
+	}
+	if c.Request.Header.Get("Accept") == "application/json" {
+		c.JSON(http.StatusOK, records)
 		return
 	}
 	content := "<ul>"
