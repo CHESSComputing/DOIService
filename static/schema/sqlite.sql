@@ -13,3 +13,4 @@ CREATE TABLE "dois" (
     "metadata" BOOLEAN,
     "published" INTEGER
 );
+CREATE INDEX idx_doi ON dois(doi);
