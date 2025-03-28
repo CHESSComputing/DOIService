@@ -80,6 +80,7 @@ func DOIHandler(c *gin.Context) {
 	base := srvConfig.Config.DOI.WebServer.Base
 	tmpl["Base"] = base
 	tmpl["DOI"] = doi
+	tmpl["Provider"] = rec.Provider
 	tmpl["DID"] = rec.Did
 	tmpl["DOIUrl"] = rec.DoiUrl
 	tmpl["Description"] = rec.Description
@@ -142,20 +143,25 @@ func SearchHandler(c *gin.Context) {
 		c.JSON(http.StatusOK, records)
 		return
 	}
-	content := "<ul>"
+	base := srvConfig.Config.DOI.WebServer.Base
+	content := "<table class=\"table table-striped\">"
 	for _, r := range records {
 		rtype := "Draft"
 		if r.Public {
 			rtype = "Public"
 		}
 		rlink := fmt.Sprintf("<span class=\"doi%s\">%s</span>", rtype, rtype)
-		link := fmt.Sprintf("<a href=\"/doi/%s\">%s</a> (%s): %s", r.Doi, r.Doi, rlink, r.Description)
-		content += fmt.Sprintf("\n<li>%s</li>", link)
+		tmpl := server.MakeTmpl(StaticFs, "row")
+		tmpl["Base"] = base
+		tmpl["Doi"] = r.Doi
+		tmpl["Rlink"] = rlink
+		tmpl["Provider"] = r.Provider
+		tmpl["Description"] = r.Description
+		content += server.TmplPage(StaticFs, "row.tmpl", tmpl)
 	}
-	content += "</ul>"
+	content += "</table>"
 
 	tmpl := server.MakeTmpl(StaticFs, "doi")
-	base := srvConfig.Config.DOI.WebServer.Base
 	tmpl["Base"] = base
 	tmpl["Query"] = doi
 	tmpl["Content"] = content
