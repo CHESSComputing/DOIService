@@ -19,6 +19,7 @@ func setupRouter() *gin.Engine {
 		server.Route{Method: "GET", Path: "/", Handler: MainHandler, Authorized: false},
 		server.Route{Method: "GET", Path: "/doi/*doi", Handler: DOIHandler, Authorized: false},
 		server.Route{Method: "POST", Path: "/search", Handler: SearchHandler, Authorized: false},
+		server.Route{Method: "PUT", Path: "/update", Handler: UpdateHandler, Authorized: false},
 	}
 	r := server.Router(routes, nil, "static", srvConfig.Config.DOI.WebServer)
 	return r

@@ -168,3 +168,29 @@ func SearchHandler(c *gin.Context) {
 	page := server.TmplPage(StaticFs, "records.tmpl", tmpl)
 	c.Data(http.StatusOK, "text/html; charset=utf-8", []byte(page))
 }
+
+// UpdateParams represents JSON struct used by UpdateHandler
+type UpdateParams struct {
+	Doi    string `json:"doi"`
+	Public bool   `json:"public"`
+}
+
+// UpdateHandler processes the PUT form request
+func UpdateHandler(c *gin.Context) {
+	var rec UpdateParams
+
+	// Bind JSON payload to struct
+	if err := c.ShouldBindJSON(&rec); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// TODO: extract from c JSON payload
+	err := doiSrv.UpdateRecord(rec.Doi, rec.Public)
+	if err != nil {
+		log.Println("ERROR: unable to find DOI records", err)
+		c.JSON(http.StatusBadRequest, rec)
+		return
+	}
+	c.JSON(http.StatusOK, nil)
+}
