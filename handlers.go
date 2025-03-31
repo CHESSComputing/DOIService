@@ -5,22 +5,17 @@ package main
 // Copyright (c) 2023 - Valentin Kuznetsov <vkuznet@gmail.com>
 //
 import (
-	"bytes"
 	"embed"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"log"
 	"net/http"
 	"strings"
-	"time"
 
 	srvConfig "github.com/CHESSComputing/golib/config"
-	doiSrv "github.com/CHESSComputing/golib/doi"
 	server "github.com/CHESSComputing/golib/server"
 	services "github.com/CHESSComputing/golib/services"
-	utils "github.com/CHESSComputing/golib/utils"
 	"github.com/gin-gonic/gin"
 )
 
@@ -45,21 +40,12 @@ func MainHandler(c *gin.Context) {
 // DOIHandler provides access to GET /DOI/123 end-point
 func DOIHandler(c *gin.Context) {
 	doi := c.Param("doi")
+
 	// the URI param contains slash prefix which we should strip off
 	if strings.HasPrefix(doi, "/") {
 		doi = strings.TrimPrefix(doi, "/")
 	}
-	records, err := doiSrv.GetData(doi)
-	if err != nil {
-		log.Println("ERROR: unable to find DOI records", err)
-		rec := services.Response("DOIService", http.StatusBadRequest, services.BindError, err)
-		if c.Request.Header.Get("Accept") == "application/json" {
-			c.JSON(http.StatusBadRequest, rec)
-			return
-		}
-		c.Data(http.StatusBadRequest, "text/html; charset=utf-8", []byte(rec.String()))
-		return
-	}
+	records := getRecords(doi)
 	if len(records) != 1 {
 		log.Println("ERROR: too many DOI records", records)
 		rec := services.Response("DOIService", http.StatusBadRequest, services.BindError, errors.New("too many DOI records"))
@@ -80,38 +66,15 @@ func DOIHandler(c *gin.Context) {
 	base := srvConfig.Config.DOI.WebServer.Base
 	tmpl["Base"] = base
 	tmpl["DOI"] = doi
-	tmpl["Provider"] = rec.Provider
-	tmpl["DID"] = rec.Did
-	tmpl["DOIUrl"] = rec.DoiUrl
-	tmpl["Description"] = rec.Description
-	tmpl["Public"] = rec.Public
-	tmpl["Published"] = time.Unix(rec.Published, 0).Format(time.RFC3339)
-
-	if rec.AccessMetadata {
-		// look-up metadata from FOXDEN MetaData service
-		query := fmt.Sprintf("{\"did\":\"%s\"}", rec.Did)
-		req := services.ServiceRequest{
-			Client:       "foxden-DOIService",
-			ServiceQuery: services.ServiceQuery{Query: query},
-		}
-
-		data, err := json.Marshal(req)
-		rurl := fmt.Sprintf("%s/search", srvConfig.Config.Services.MetaDataURL)
-		_httpReadRequest.GetToken()
-		resp, err := _httpReadRequest.Post(rurl, "application/json", bytes.NewBuffer(data))
-		if err != nil {
-			log.Println("ERROR: unable to place request to MetaData service", err)
-			c.Data(http.StatusBadRequest, "text/html; charset=utf-8", []byte("unable to access MetaData service"))
-			return
-		}
-		defer resp.Body.Close()
-		data, err = io.ReadAll(resp.Body)
-		if err != nil {
-			log.Println("ERROR: unable to read MetaData service response", err)
-			c.Data(http.StatusBadRequest, "text/html; charset=utf-8", []byte("unable to read MetaData service response"))
-			return
-		}
-		tmpl["Metadata"] = string(utils.FormatJsonRecords(data))
+	tmpl["Provider"] = rec["doi_provider"]
+	tmpl["DID"] = rec["did"]
+	tmpl["DOIUrl"] = rec["doi_url"]
+	tmpl["Description"] = rec["description"]
+	tmpl["Public"] = rec["doi_public"]
+	tmpl["Published"] = rec["doi_created_at"]
+	tmpl["Metadata"] = rec
+	if bytes, err := json.MarshalIndent(rec, "", "  "); err == nil {
+		tmpl["Metadata"] = string(bytes)
 	}
 	// compose web page content
 	content := server.TmplPage(StaticFs, "doi.tmpl", tmpl)
@@ -121,24 +84,10 @@ func DOIHandler(c *gin.Context) {
 // SearchHandler processes the POST form request and redirects if DOI exists
 func SearchHandler(c *gin.Context) {
 	doi := c.PostForm("doi")
-	pat := "%" + doi + "%"
-	if doi == "" {
-		pat = ""
-	}
 	if srvConfig.Config.DOI.WebServer.Verbose > 0 {
-		log.Printf("Search doi with pattern '%s'", pat)
+		log.Printf("Search doi with pattern '%s'", doi)
 	}
-	records, err := doiSrv.GetData(pat)
-	if err != nil {
-		log.Println("ERROR: unable to find DOI records", err)
-		rec := services.Response("DOIService", http.StatusBadRequest, services.BindError, err)
-		if c.Request.Header.Get("Accept") == "application/json" {
-			c.JSON(http.StatusBadRequest, rec)
-			return
-		}
-		c.Data(http.StatusBadRequest, "text/html; charset=utf-8", []byte(rec.String()))
-		return
-	}
+	records := getRecords(doi)
 	if c.Request.Header.Get("Accept") == "application/json" {
 		c.JSON(http.StatusOK, records)
 		return
@@ -147,16 +96,19 @@ func SearchHandler(c *gin.Context) {
 	content := "<table class=\"table table-striped\">"
 	for _, r := range records {
 		rtype := "Draft"
-		if r.Public {
-			rtype = "Public"
+		if v, ok := r["doi_public"]; ok {
+			if v.(bool) == true {
+				rtype = "Public"
+			}
 		}
 		rlink := fmt.Sprintf("<span class=\"doi%s\">%s</span>", rtype, rtype)
 		tmpl := server.MakeTmpl(StaticFs, "row")
 		tmpl["Base"] = base
-		tmpl["Doi"] = r.Doi
+		tmpl["Did"] = r["did"]
+		tmpl["Doi"] = r["doi"]
 		tmpl["Rlink"] = rlink
-		tmpl["Provider"] = r.Provider
-		tmpl["Description"] = r.Description
+		tmpl["Provider"] = r["doi_provider"]
+		tmpl["Description"] = r["description"]
 		content += server.TmplPage(StaticFs, "row.tmpl", tmpl)
 	}
 	content += "</table>"
@@ -167,30 +119,4 @@ func SearchHandler(c *gin.Context) {
 	tmpl["Content"] = content
 	page := server.TmplPage(StaticFs, "records.tmpl", tmpl)
 	c.Data(http.StatusOK, "text/html; charset=utf-8", []byte(page))
-}
-
-// UpdateParams represents JSON struct used by UpdateHandler
-type UpdateParams struct {
-	Doi    string `json:"doi"`
-	Public bool   `json:"public"`
-}
-
-// UpdateHandler processes the PUT form request
-func UpdateHandler(c *gin.Context) {
-	var rec UpdateParams
-
-	// Bind JSON payload to struct
-	if err := c.ShouldBindJSON(&rec); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	// TODO: extract from c JSON payload
-	err := doiSrv.UpdateRecord(rec.Doi, rec.Public)
-	if err != nil {
-		log.Println("ERROR: unable to find DOI records", err)
-		c.JSON(http.StatusBadRequest, rec)
-		return
-	}
-	c.JSON(http.StatusOK, nil)
 }
