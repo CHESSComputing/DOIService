@@ -72,9 +72,14 @@ func DOIHandler(c *gin.Context) {
 	tmpl["Description"] = rec["description"]
 	tmpl["Public"] = rec["doi_public"]
 	tmpl["Published"] = rec["doi_created_at"]
-	tmpl["Metadata"] = rec
-	if bytes, err := json.MarshalIndent(rec, "", "  "); err == nil {
-		tmpl["Metadata"] = string(bytes)
+	tmpl["Metadata"] = "metadata access is restricted"
+	if val, ok := rec["doi_access_metadata"]; ok {
+		if val.(bool) == true {
+			tmpl["Metadata"] = rec
+			if bytes, err := json.MarshalIndent(rec, "", "  "); err == nil {
+				tmpl["Metadata"] = string(bytes)
+			}
+		}
 	}
 	// compose web page content
 	content := server.TmplPage(StaticFs, "doi.tmpl", tmpl)
@@ -94,6 +99,7 @@ func SearchHandler(c *gin.Context) {
 	}
 	base := srvConfig.Config.DOI.WebServer.Base
 	content := "<table class=\"table table-striped\">"
+	content += "<th><b>DID</b></th><th><b>Type</b></th><th><b>Provider</b></th><th><b>Description</b></th><th><b>DOI link</b></th>"
 	for _, r := range records {
 		rtype := "Draft"
 		if v, ok := r["doi_public"]; ok {
