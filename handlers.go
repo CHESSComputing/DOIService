@@ -26,13 +26,9 @@ var StaticFs embed.FS
 
 // MainHandler provides access to GET / end-point
 func MainHandler(c *gin.Context) {
-	// get number of entries in our DOI area
-	//     ndocs, _ := utils.CountEntries(srvConfig.Config.DOI.DocumentDir)
-
 	tmpl := server.MakeTmpl(StaticFs, "main")
 	base := srvConfig.Config.DOI.WebServer.Base
 	tmpl["Base"] = base
-	//     tmpl["NDocuments"] = ndocs
 	content := server.TmplPage(StaticFs, "main.tmpl", tmpl)
 	c.Data(http.StatusOK, "text/html; charset=utf-8", []byte(content))
 }
