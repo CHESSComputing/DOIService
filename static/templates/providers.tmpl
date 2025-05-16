@@ -29,74 +29,49 @@
 
 <section>
     <article id="article">
-        <br/>
-<form action="{{.Base}}/search" method="post" name="search" id="search" class="form">
-<div class="grid">
-    <div class="column column-2">
-    </div>
-    <div class="column column-6">
-        <input class="input"
-               type="text"
-               id="doi"
-               name="doi"
-               placeholder="DOI identifier">
-    </div>
-    <div class="column column-2">
-        <button class="button button-primary">Search</button>
-    </div>
-    <div class="column column-2">
-    </div>
-</div>
-
-</form>
-
-    <br/>
-    <hr/>
-    <br/>
+    <h1 class="doi-title">Supported DOI providers</h1>
     <div class="grid">
         <div class="column column-4">
-            <a href="{{.FoxdenSearch}}">
-                <img src="https://cdn.onlinewebfonts.com/svg/img_572125.png" alt="search" style="width:80px;">
+            <a href="https://datacite.org/">
+                <img src="https://cdn.onlinewebfonts.com/svg/img_236663.png" alt="datacite" style="width:80px;">
             </a>
             <br/>
-            <div class="doiText">
-            Search and explore publicly available datasets collected at various CHESS beamlines.
-            </div>
+            <b>DataCite</b> is a non-profit organization that provides
+            persistent identifiers (DOIs) for research data and other scholarly
+            outputs. It serves as a DOI registration agency and offers a
+            standardized metadata schema.
+            <br/>
+            <b>BEST FOR:</b> institutions such as universities, libraries, and
+            research centers that manage repositories or data infrastructures
+            and need to assign DOIs to their research outputs.
         </div>
         <div class="column column-4">
-            <a href="https://chesscomputing.github.io/FOXDEN/">
-                <img src="{{.Base}}/images/foxden-icon.png" alt="FOXDEN" style="width:80px;">
+            <a href="https://zenodo.org/">
+                <img src="https://cdn.onlinewebfonts.com/svg/img_397365.png" alt="zenodo" style="width:80px;">
             </a>
             <br/>
-            <div class="doiText">
-            Organize your data with FOXDEN infrastructure
-            </div>
+            <b>Zenodo</b> is a general-purpose open-access repository developed by
+            CERN under the European OpenAIRE program. It allows researchers
+            from all disciplines to deposit datasets, publications, software,
+            and more.
+            <br/>
+            <b>BEST FOR:</b> researchers and scientists across all disciplines
+            who want an easy-to-use platform to archive and publish research
+            outputs with a DOI.
         </div>
         <div class="column column-4">
-            <a href="https://en.wikipedia.org/wiki/FAIR_data">
-                <img src="https://cdn.onlinewebfonts.com/svg/img_533219.png" alt="publish" style="width:80px;">
+            <a href="https://materialscommons.org/">
+                <img src="https://cdn.onlinewebfonts.com/svg/img_220644.png" alt="materialcommons" style="width:80px;">
             </a>
             <br/>
-            <div class="doiText">
-            Publish and share your data with scientists around the globe based on FAIR principles
-            </div>
-        </div>
-    </div>
-
-    <br/>
-    <div class="grid">
-        <div class="column column-2">
-        </div>
-        <div class="column column-4">
-            <img src="{{.Base}}/images/chess-logo.png" alt="CHESS">
-        </div>
-        <div class="column column-6 doiText">
+            <b>MaterialCommons</b> is a data management and publication
+            platform specifically designed for materials science. It supports
+            collaboration, data sharing, workflow documentation, and publishing
+            datasets with DOIs.
             <br/>
-            <ul class="custom-bullets">
-                <li>Number of supported schemas: {{.NSchemas}}</li>
-                <li>Number of CHESS datasets: {{.NMetaRecords}}</li>
-                <li>Number of published datasets: {{.NDOIRecords}}</li>
-            </ul>
+            <b>BEST FOR:</b> materials science researchers and labs needing a
+            domain-specific repository for organizing and publishing
+            experimental and simulation data.
         </div>
     </div>
 

@@ -29,6 +29,10 @@ func MainHandler(c *gin.Context) {
 	tmpl := server.MakeTmpl(StaticFs, "main")
 	base := srvConfig.Config.DOI.WebServer.Base
 	tmpl["Base"] = base
+	tmpl["FoxdenSearch"] = fmt.Sprintf("%s/search", srvConfig.Config.Services.FrontendURL)
+	tmpl["NSchemas"] = len(srvConfig.Config.CHESSMetaData.SchemaFiles)
+	tmpl["NMetaRecords"] = countMetaRecords()
+	tmpl["NDOIRecords"] = countDOIRecords()
 	content := server.TmplPage(StaticFs, "main.tmpl", tmpl)
 	c.Data(http.StatusOK, "text/html; charset=utf-8", []byte(content))
 }
