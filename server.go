@@ -5,6 +5,7 @@ package main
 // Copyright (c) 2025 - Valentin Kuznetsov <vkuznet@gmail.com>
 //
 import (
+	"embed"
 	"log"
 
 	srvConfig "github.com/CHESSComputing/golib/config"
@@ -14,15 +15,31 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-var _httpReadRequest *services.HttpRequest
+// content is our static web server content.
+//
+//go:embed static
+var StaticFs embed.FS
 
-// metaDB object
+// global variables
+var _header, _footer string
+var _httpReadRequest *services.HttpRequest
 var metaDB docdb.DocDB
+
+// helper function to define our header
+func header() string {
+	return server.Header(StaticFs, srvConfig.Config.DOI.WebServer.Base)
+}
+
+// helper function to define our footer
+func footer() string {
+	return server.Footer(StaticFs, srvConfig.Config.DOI.WebServer.Base)
+}
 
 // helper function to setup our router
 func setupRouter() *gin.Engine {
 	routes := []server.Route{
 		server.Route{Method: "GET", Path: "/", Handler: MainHandler, Authorized: false},
+		server.Route{Method: "GET", Path: "/dstable", Handler: DOITableHandler, Authorized: false},
 		server.Route{Method: "GET", Path: "/doi/*doi", Handler: DOIHandler, Authorized: false},
 		server.Route{Method: "POST", Path: "/search", Handler: SearchHandler, Authorized: false},
 	}

@@ -5,7 +5,6 @@ package main
 // Copyright (c) 2023 - Valentin Kuznetsov <vkuznet@gmail.com>
 //
 import (
-	"embed"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -18,11 +17,6 @@ import (
 	services "github.com/CHESSComputing/golib/services"
 	"github.com/gin-gonic/gin"
 )
-
-// content is our static web server content.
-//
-//go:embed static
-var StaticFs embed.FS
 
 // MainHandler provides access to GET / end-point
 func MainHandler(c *gin.Context) {
@@ -94,7 +88,17 @@ func SearchHandler(c *gin.Context) {
 	}
 	records := getRecords(doi)
 	if c.Request.Header.Get("Accept") == "application/json" {
-		c.JSON(http.StatusOK, records)
+		keys := []string{"did", "doi", "doi_public", "doi_url", "doi_provider", "doi_created_at"}
+		reducedRecords := selectKeys(records, keys)
+		log.Println("### records", reducedRecords)
+		//c.JSON(http.StatusOK, reducedRecords)
+		// Send JSON response
+		c.JSON(http.StatusOK, gin.H{
+			"total":    len(reducedRecords),
+			"records":  reducedRecords,
+			"columns":  keys,
+			"pageSize": 10,
+		})
 		return
 	}
 	base := srvConfig.Config.DOI.WebServer.Base
@@ -125,4 +129,15 @@ func SearchHandler(c *gin.Context) {
 	tmpl["Content"] = content
 	page := server.TmplPage(StaticFs, "records.tmpl", tmpl)
 	c.Data(http.StatusOK, "text/html; charset=utf-8", []byte(page))
+}
+
+// DOITableHandler provides access to GET /dstable endpoint
+func DOITableHandler(c *gin.Context) {
+	tmpl := server.MakeTmpl(StaticFs, "CHESS DOI records")
+	tmpl["Base"] = srvConfig.Config.DOI.WebServer.Base
+	attrs := []string{"did", "type", "doi_provider", "description", "doi_url"}
+	tmpl["Columns"] = attrs
+	tmpl["DataAttributes"] = strings.Join(attrs, ",")
+	content := server.TmplPage(StaticFs, "dyn_dstable.tmpl", tmpl)
+	c.Data(http.StatusOK, "text/html; charset=utf-8", []byte(header()+content+footer()))
 }
