@@ -88,15 +88,15 @@ func SearchHandler(c *gin.Context) {
 	}
 	records := getRecords(doi)
 	if c.Request.Header.Get("Accept") == "application/json" {
-		keys := []string{"did", "doi", "doi_public", "doi_url", "doi_provider", "doi_created_at"}
+		keys := []string{"did", "btr", "doi", "doi_public", "doi_provider", "doi_created_at"}
+		cols := []string{"did", "btr"}
 		reducedRecords := selectKeys(records, keys)
-		log.Println("### records", reducedRecords)
 		//c.JSON(http.StatusOK, reducedRecords)
 		// Send JSON response
 		c.JSON(http.StatusOK, gin.H{
 			"total":    len(reducedRecords),
 			"records":  reducedRecords,
-			"columns":  keys,
+			"columns":  cols,
 			"pageSize": 10,
 		})
 		return
