@@ -1,0 +1,140 @@
+<section>
+  <article id="article">
+<div class="center huge">
+    FOXDEN: DOI records
+</div>
+<div class="grid">
+    <div class="column column-11">
+        <div>
+            User {{.User}}
+        </div>
+    </div>
+    <div class="column column-1">
+    </div>
+</div>
+
+<hr/>
+
+<div>
+    <table id="dataTable" class="display" style="width:100%">
+        <thead>
+            <tr id="tableHeader">
+                <!-- Headers will be populated dynamically -->
+            </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
+</div>
+
+  </article>
+</section>
+
+<script>
+
+$(document).ready(function() {
+    let totalRecords = 0;
+    let columns = [];
+
+    // Fetch initial data to determine columns and populate the first page
+    fetchData(0, 10, "").then(response => {
+        columns = response.columns;
+
+        // Create table headers dynamically
+        columns.forEach(function(col) {
+            $("#tableHeader").append(`<th>${toCamelCase(col)}</th>`);
+        });
+        $("#tableHeader").append(`<th>Record</th>`); // Extra column for the record button
+
+        totalRecords = response.total;
+        initializeDataTable(response.records);
+    });
+
+    // Convert underscore notation to CamelCase
+    function toCamelCase(str) {
+        return str.replace(/_./g, match => match.charAt(1).toUpperCase()).replace(/^./, match => match.toUpperCase());
+    }
+
+    // Function to fetch data from the server with optional search parameter
+    function fetchData(startIndex, limit, doi) {
+        return $.ajax({
+            url: "/search",
+            type: "POST",
+            data: {
+                idx: startIndex,
+                limit: limit,
+                doi: doi,
+            },
+            dataType: "json",
+            headers: {
+              "Accept": "application/json"
+            }
+        });
+    }
+
+    // Initialize DataTable with server-side pagination and search
+    // https://datatables.net/manual/
+    // https://datatables.net/reference/option/language
+    function initializeDataTable(initialData) {
+        $('#dataTable').DataTable({
+            data: initialData,
+            columns: columns.map(col => ({ data: col, title: toCamelCase(col) }))
+                .concat([{ data: null, title: "Action", orderable: false, render: function(data, type, row) {
+                    const payload = {
+                        {{- range $index, $column := .Columns }}
+                            "{{ $column }}": row["{{$column}}"],
+                        {{- end }}
+                    };
+                    const doiValue = row["doi"] || "";
+                    return `
+                        <form action="/search" method="POST" style="display:inline;">
+                            <input type="hidden" name="doi" value='${doiValue}'>
+                            <button type="submit">Record</button>
+                        </form>
+                    `;
+                }}]),
+            pageLength: 10,
+            serverSide: true,
+            processing: true,
+            searchDelay: 500, // make delay 
+            ajax: function(data, callback, settings) {
+                const pageSize = data.length; // Get the current page length selected in the UI
+                const pageIndex = data.start; // Start index for data
+                const searchTerm = data.search.value || "";  // Retrieve search term from DataTables
+
+                // Extract sorting information from the DataTables settings
+                const orderColumnIdx = data.order[0].column;
+                const sortKey = columns[orderColumnIdx];
+                const sortDirection = data.order[0].dir; // "asc" or "desc"
+
+                // Fetch data with current pagination and search term
+                fetchData(pageIndex, pageSize, "").then(response => {
+                    callback({
+                        recordsTotal: totalRecords,
+                        recordsFiltered: response.total,
+                        data: response.records
+                    });
+                });
+            },
+            lengthMenu: [10, 25, 50, 100], // Define selectable page length options
+            language: {
+                search: "Filter:",  // Customize the search label
+                searchPlaceholder: "Type to filter...", // Optional: Customize the placeholder text
+                info: "Page _PAGE_ of entries related to your DOI search",
+                infoEmpty: "No entries available based on your DOI search...",
+                infoFiltered: "(filtered from _MAX_ total entries)",
+                emptyTable: "No datasets available based on your DOI and filter...",
+                zeroRecords: "No datasets available based on your DOI and filter...",
+                loadingRecords: "Loading...",
+                processing: "Processing...",
+                paginate: {
+                    first: 'First',
+                    last: 'Last',
+                    next: 'Next',
+                    previous: 'Prev'
+                }
+            }
+        });
+    }
+});
+</script>
