@@ -79,18 +79,10 @@ $(document).ready(function() {
         $('#dataTable').DataTable({
             data: initialData,
             columns: columns.map(col => ({ data: col, title: toCamelCase(col) }))
-                .concat([{ data: null, title: "Action", orderable: false, render: function(data, type, row) {
-                    const payload = {
-                        {{- range $index, $column := .Columns }}
-                            "{{ $column }}": row["{{$column}}"],
-                        {{- end }}
-                    };
+                .concat([{ data: null, title: "DOI", orderable: false, render: function(data, type, row) {
                     const doiValue = row["doi"] || "";
                     return `
-                        <form action="/search" method="POST" style="display:inline;">
-                            <input type="hidden" name="doi" value='${doiValue}'>
-                            <button type="submit">Record</button>
-                        </form>
+                        <a href="/doi/${doiValue}">${doiValue}</a>
                     `;
                 }}]),
             pageLength: 10,
