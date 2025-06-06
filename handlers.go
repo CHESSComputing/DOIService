@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strconv"
 	"strings"
 
 	srvConfig "github.com/CHESSComputing/golib/config"
@@ -28,7 +29,7 @@ func MainHandler(c *gin.Context) {
 	tmpl["NMetaRecords"] = countMetaRecords()
 	tmpl["NDOIRecords"] = countDOIRecords()
 	content := server.TmplPage(StaticFs, "main.tmpl", tmpl)
-	c.Data(http.StatusOK, "text/html; charset=utf-8", []byte(content))
+	c.Data(http.StatusOK, "text/html; charset=utf-8", []byte(header()+content+footer()))
 }
 
 // DOIHandler provides access to GET /DOI/123 end-point
@@ -39,7 +40,7 @@ func DOIHandler(c *gin.Context) {
 	if strings.HasPrefix(doi, "/") {
 		doi = strings.TrimPrefix(doi, "/")
 	}
-	records := getRecords(doi)
+	records := getRecords(doi, 0, 1)
 	if len(records) != 1 {
 		log.Println("ERROR: too many DOI records", records)
 		rec := services.Response("DOIService", http.StatusBadRequest, services.BindError, errors.New("too many DOI records"))
@@ -77,7 +78,7 @@ func DOIHandler(c *gin.Context) {
 	}
 	// compose web page content
 	content := server.TmplPage(StaticFs, "doi.tmpl", tmpl)
-	c.Data(http.StatusOK, "text/html; charset=utf-8", []byte(content))
+	c.Data(http.StatusOK, "text/html; charset=utf-8", []byte(header()+content+footer()))
 }
 
 // SearchHandler processes the POST form request and redirects if DOI exists
@@ -86,18 +87,33 @@ func SearchHandler(c *gin.Context) {
 	if srvConfig.Config.DOI.WebServer.Verbose > 0 {
 		log.Printf("Search doi with pattern '%s'", doi)
 	}
-	records := getRecords(doi)
+	query := c.PostForm("query")
+	var err error
+	var idx, limit int
+	idxStr := c.PostForm("idx")
+	if idxStr != "" {
+		if idx, err = strconv.Atoi(idxStr); err != nil {
+			idx = 0
+		}
+	}
+	limitStr := c.PostForm("limit")
+	if limitStr != "" {
+		if limit, err = strconv.Atoi(limitStr); err != nil {
+			limit = 10
+		}
+	}
+	records := getRecords(doi, idx, limit)
 	if c.Request.Header.Get("Accept") == "application/json" {
 		keys := []string{"did", "btr", "doi", "doi_public", "doi_provider", "doi_created_at"}
-		cols := []string{"did", "btr"}
-		reducedRecords := selectKeys(records, keys)
-		//c.JSON(http.StatusOK, reducedRecords)
+		cols := []string{"did", "btr", "doi_provider", "doi_type"}
+		// reduce records to provided keys and query pattern
+		reducedRecords := selectKeys(records, keys, query)
 		// Send JSON response
 		c.JSON(http.StatusOK, gin.H{
-			"total":    len(reducedRecords),
+			"total":    countDOIRecords(),
 			"records":  reducedRecords,
 			"columns":  cols,
-			"pageSize": 10,
+			"pageSize": limit,
 		})
 		return
 	}
@@ -128,16 +144,16 @@ func SearchHandler(c *gin.Context) {
 	tmpl["Query"] = doi
 	tmpl["Content"] = content
 	page := server.TmplPage(StaticFs, "records.tmpl", tmpl)
-	c.Data(http.StatusOK, "text/html; charset=utf-8", []byte(page))
+	c.Data(http.StatusOK, "text/html; charset=utf-8", []byte(header()+page+footer()))
 }
 
 // DOITableHandler provides access to GET /dstable endpoint
 func DOITableHandler(c *gin.Context) {
 	tmpl := server.MakeTmpl(StaticFs, "CHESS DOI records")
 	tmpl["Base"] = srvConfig.Config.DOI.WebServer.Base
-	attrs := []string{"did", "type", "doi_provider", "description", "doi_url"}
-	tmpl["Columns"] = attrs
-	tmpl["DataAttributes"] = strings.Join(attrs, ",")
+	tmpl["NSchemas"] = len(srvConfig.Config.CHESSMetaData.SchemaFiles)
+	tmpl["NMetaRecords"] = countMetaRecords()
+	tmpl["NDOIRecords"] = countDOIRecords()
 	content := server.TmplPage(StaticFs, "dyn_dstable.tmpl", tmpl)
 	c.Data(http.StatusOK, "text/html; charset=utf-8", []byte(header()+content+footer()))
 }

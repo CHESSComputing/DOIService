@@ -38,8 +38,8 @@ func footer() string {
 // helper function to setup our router
 func setupRouter() *gin.Engine {
 	routes := []server.Route{
-		server.Route{Method: "GET", Path: "/", Handler: MainHandler, Authorized: false},
-		server.Route{Method: "GET", Path: "/dstable", Handler: DOITableHandler, Authorized: false},
+		server.Route{Method: "GET", Path: "/search", Handler: MainHandler, Authorized: false},
+		server.Route{Method: "GET", Path: "/", Handler: DOITableHandler, Authorized: false},
 		server.Route{Method: "GET", Path: "/doi/*doi", Handler: DOIHandler, Authorized: false},
 		server.Route{Method: "POST", Path: "/search", Handler: SearchHandler, Authorized: false},
 	}
