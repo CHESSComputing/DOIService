@@ -19,6 +19,17 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// helper function to define our header
+func doiheader() string {
+	if _header == "" {
+		tmpl := server.MakeTmpl(StaticFs, "Header")
+		tmpl["Base"] = srvConfig.Config.DOI.WebServer.Base
+		tmpl["FOXDENHOME"] = srvConfig.Config.Services.FrontendURL
+		_header = server.TmplPage(StaticFs, "header.tmpl", tmpl)
+	}
+	return _header
+}
+
 // MainHandler provides access to GET / end-point
 func MainHandler(c *gin.Context) {
 	tmpl := server.MakeTmpl(StaticFs, "main")
@@ -29,7 +40,7 @@ func MainHandler(c *gin.Context) {
 	tmpl["NMetaRecords"] = countMetaRecords()
 	tmpl["NDOIRecords"] = countDOIRecords()
 	content := server.TmplPage(StaticFs, "main.tmpl", tmpl)
-	c.Data(http.StatusOK, "text/html; charset=utf-8", []byte(header()+content+footer()))
+	c.Data(http.StatusOK, "text/html; charset=utf-8", []byte(doiheader()+content+footer()))
 }
 
 // DOIHandler provides access to GET /DOI/123 end-point
@@ -78,7 +89,7 @@ func DOIHandler(c *gin.Context) {
 	}
 	// compose web page content
 	content := server.TmplPage(StaticFs, "doi.tmpl", tmpl)
-	c.Data(http.StatusOK, "text/html; charset=utf-8", []byte(header()+content+footer()))
+	c.Data(http.StatusOK, "text/html; charset=utf-8", []byte(doiheader()+content+footer()))
 }
 
 // SearchHandler processes the POST form request and redirects if DOI exists
@@ -144,7 +155,7 @@ func SearchHandler(c *gin.Context) {
 	tmpl["Query"] = doi
 	tmpl["Content"] = content
 	page := server.TmplPage(StaticFs, "records.tmpl", tmpl)
-	c.Data(http.StatusOK, "text/html; charset=utf-8", []byte(header()+page+footer()))
+	c.Data(http.StatusOK, "text/html; charset=utf-8", []byte(doiheader()+page+footer()))
 }
 
 // DOITableHandler provides access to GET /dstable endpoint
@@ -155,5 +166,5 @@ func DOITableHandler(c *gin.Context) {
 	tmpl["NMetaRecords"] = countMetaRecords()
 	tmpl["NDOIRecords"] = countDOIRecords()
 	content := server.TmplPage(StaticFs, "dyn_dstable.tmpl", tmpl)
-	c.Data(http.StatusOK, "text/html; charset=utf-8", []byte(header()+content+footer()))
+	c.Data(http.StatusOK, "text/html; charset=utf-8", []byte(doiheader()+content+footer()))
 }
