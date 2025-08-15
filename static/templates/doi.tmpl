@@ -26,6 +26,17 @@
 <pre>
 {{.Metadata}}
 </pre>
+{{if .Parents}}
+<br/>
+<h2>Parents</h2>
+{{range $k, $v :=  .Parents}}
+<b>DID:</b> {{$k}}
+<pre>
+{{$v}}
+</pre>
+<br/>
+{{end}}
+{{end}}
 
     </article>
 </section>
