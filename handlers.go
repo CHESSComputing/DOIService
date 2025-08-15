@@ -87,6 +87,31 @@ func DOIHandler(c *gin.Context) {
 			}
 		}
 	}
+	// add parent information if it is provided by the record
+	var parents []string
+	dids := rec["doi_parents_dids"]
+	switch values := dids.(type) {
+	case []string:
+		for _, v := range values {
+			parents = append(parents, v)
+		}
+	}
+	if pid, ok := rec["parent_did"]; ok {
+		parents = append(parents, pid.(string))
+	}
+	parentsRecords := make(map[string]any)
+	if len(parents) > 0 {
+		for _, pid := range parents {
+			mrec := getMetadataRecord(pid)
+			if bytes, err := json.MarshalIndent(mrec, "", "  "); err == nil {
+				parentsRecords[pid] = string(bytes)
+			} else {
+				parentsRecords[pid] = mrec
+			}
+		}
+	}
+	tmpl["Parents"] = parentsRecords
+
 	// compose web page content
 	content := server.TmplPage(StaticFs, "doi.tmpl", tmpl)
 	c.Data(http.StatusOK, "text/html; charset=utf-8", []byte(doiheader()+content+footer()))
