@@ -27,6 +27,19 @@ func getRecords(doiPattern string, idx, limit int) []map[string]any {
 	return metaDB.Get(dbname, collname, spec, idx, limit)
 }
 
+// helper function to get Metadata record
+func getMetadataRecord(did string) map[string]any {
+	spec := make(map[string]any)
+	spec["did"] = did
+	dbname := srvConfig.Config.CHESSMetaData.MongoDB.DBName
+	collname := srvConfig.Config.CHESSMetaData.MongoDB.DBColl
+	records := metaDB.Get(dbname, collname, spec, 0, 1)
+	if len(records) == 1 {
+		return records[0]
+	}
+	return map[string]any{}
+}
+
 // helper function to select keys from a record and return final list of reduced records
 func selectKeys(records []map[string]any, keys []string, pat string) []map[string]any {
 	var out []map[string]any
