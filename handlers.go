@@ -17,6 +17,7 @@ import (
 	server "github.com/CHESSComputing/golib/server"
 	services "github.com/CHESSComputing/golib/services"
 	"github.com/gin-gonic/gin"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 // helper function to define our header
@@ -94,6 +95,14 @@ func DOIHandler(c *gin.Context) {
 	case []string:
 		for _, v := range values {
 			parents = append(parents, v)
+		}
+	case []any:
+		for _, v := range values {
+			parents = append(parents, v.(string))
+		}
+	case primitive.A: // mongodb return records in this data-type
+		for _, v := range values {
+			parents = append(parents, fmt.Sprintf("%v", v))
 		}
 	}
 	if pid, ok := rec["parent_did"]; ok {
