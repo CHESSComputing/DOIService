@@ -11,7 +11,7 @@
 {{if .Public}}
 <b>Record:</b> <a href="{{.DOIUrl}}">{{.DOI}}</a>
 {{else}}
-<b>Record:</b> {{.DOI}} (not public)
+<b>Record:</b> {{.DOI}} (not public but available at <a href="{{.DOIUrl}}">{{.DOI}}</a>)
 {{end}}
 <br/>
 <b>Provider:</b> {{.Provider}}
