@@ -71,11 +71,14 @@ func DOIHandler(c *gin.Context) {
 
 	tmpl := server.MakeTmpl(StaticFs, "doi")
 	base := srvConfig.Config.DOI.WebServer.Base
+	did := fmt.Sprintf("%s", rec["did"])
 	tmpl["Base"] = base
 	tmpl["DOI"] = doi
-	tmpl["Provider"] = rec["doi_provider"]
-	tmpl["DID"] = rec["did"]
-	tmpl["DOIUrl"] = rec["doi_url"]
+	tmpl["Provider"] = strings.ToLower(fmt.Sprintf("%s", rec["doi_provider"]))
+	tmpl["DID"] = did
+	tmpl["DidLinkUrl"] = fmt.Sprintf("%s/record?did=%s", strings.TrimSuffix(srvConfig.Config.FrontendURL, "/"), did)
+	tmpl["DOIUrl"] = fmt.Sprintf("https://doi.org/%s", doi)
+	tmpl["ProviderDOIUrl"] = rec["doi_url"]
 	tmpl["Description"] = rec["description"]
 	tmpl["Public"] = rec["doi_public"]
 	tmpl["Published"] = rec["doi_created_at"]

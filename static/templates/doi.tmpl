@@ -1,5 +1,5 @@
 <section>
-    <article id="article">
+    <article id="article" class="wide">
 
 <h2>DOI:
 {{if .Public}}
@@ -8,19 +8,56 @@
    <span class="doiDraft">(Draft)</span>
 {{end}}
 </h2>
+
+<table class="doi">
+  <tr>
+    <td>DID</td>
+    <td><a href="{{.DidLinkUrl}}" class="doi-link">{{.DID}}</a></td>
+  </tr>
+
+  <tr>
+    <td>Record DOI</b></td>
+    <td>
 {{if .Public}}
-<b>Record:</b> <a href="{{.DOIUrl}}">{{.DOI}}</a>
+<a href="{{.DOIUrl}}" class="doi-link">{{.DOI}}</a>
 {{else}}
-<b>Record:</b> {{.DOI}} (not public but available at <a href="{{.DOIUrl}}">{{.DOI}}</a>)
+<a href="{{.DOIUrl}}" class="doi-link">{{.DOI}}</a> (not public yet)
 {{end}}
-<br/>
-<b>Provider:</b> {{.Provider}}
-<br/>
-<b>DID:</b> {{.DID}}
-<br/>
-<b>Published:</b> {{.Published}}
-<br/>
-<b>Description:</b> {{.Description}}
+    </td>
+  </tr>
+
+  <tr>
+    <td>Provider</td>
+    <td>
+{{if eq .Provider "datacite"}}
+  <a href="https://datacite.org" class="doi-link">DataCite</a>
+{{else if eq .Provider "materialscommons"}}
+  <a href="https://materialscommons.org/" class="doi-link">MaterialsCommons</a>
+{{else if eq .Provider "zenodo"}}
+  <a href="https://zenodo.org" class="doi-link">Zenodo</a>
+{{else}}
+{{.Provider}}
+{{end}}
+    </td>
+  </tr>
+
+  <tr>
+    <td>Provider record</td>
+    <td><a href="{{.ProviderDOIUrl}}" class="doi-link">{{.ProviderDOIUrl}}</a></td>
+  </tr>
+
+  <tr>
+    <td>Published</td>
+    <td>{{.Published}}</td>
+  </tr>
+
+  <tr>
+    <td>Description</td>
+    <td>{{.Description}}</td>
+  </tr>
+
+</table>
+
 <br/>
 <b>Metadata:</b>
 <pre>
