@@ -152,8 +152,8 @@ func SearchHandler(c *gin.Context) {
 	}
 	records := getRecords(doi, idx, limit)
 	if c.Request.Header.Get("Accept") == "application/json" {
-		keys := []string{"did", "btr", "doi", "doi_public", "doi_provider", "doi_created_at"}
-		cols := []string{"did", "btr", "doi_provider", "doi_type"}
+		keys := []string{"did", "doi", "doi_public", "doi_provider", "doi_created_at"}
+		cols := []string{"did", "doi_provider", "doi_type"}
 		// reduce records to provided keys and query pattern
 		reducedRecords := selectKeys(records, keys, query)
 		// Send JSON response
