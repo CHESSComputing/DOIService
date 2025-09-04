@@ -77,7 +77,7 @@ $(document).ready(function() {
                 .concat([{ data: null, title: "DOI", orderable: false, render: function(data, type, row) {
                     const doiValue = row["doi"] || "";
                     return `
-                        <a href="/doi/${doiValue}">${doiValue}</a>
+                        <a href="/dois/${doiValue}">${doiValue}</a>
                     `;
                 }}]),
             pageLength: 10,
