@@ -38,11 +38,11 @@ func footer() string {
 // helper function to setup our router
 func setupRouter() *gin.Engine {
 	routes := []server.Route{
-		server.Route{Method: "GET", Path: "/search", Handler: MainHandler, Authorized: false},
-		server.Route{Method: "GET", Path: "/", Handler: DOITableHandler, Authorized: false},
-		server.Route{Method: "GET", Path: "/doi/*doi", Handler: DOIHandler, Authorized: false},
-		server.Route{Method: "GET", Path: "/dois/*doi", Handler: DOIHandler, Authorized: false},
-		server.Route{Method: "POST", Path: "/search", Handler: SearchHandler, Authorized: false},
+		{Method: "GET", Path: "/search", Handler: MainHandler, Authorized: false},
+		{Method: "GET", Path: "/", Handler: DOITableHandler, Authorized: false},
+		{Method: "GET", Path: "/doi/*doi", Handler: DOIHandler, Authorized: false},
+		{Method: "GET", Path: "/dois/*doi", Handler: DOIHandler, Authorized: false},
+		{Method: "POST", Path: "/search", Handler: SearchHandler, Authorized: false},
 	}
 	r := server.Router(routes, nil, "static", srvConfig.Config.DOI.WebServer)
 	return r
