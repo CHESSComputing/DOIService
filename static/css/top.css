@@ -27,9 +27,10 @@ article {
   min-height: 650px;
 }
 article.wide {
-  padding-left: 200px;
-  padding-right: 200px;
+  padding-left: 100px;
+  padding-right: 100px;
 }
+
 footer {
   background-color: #D6D6D6;
   text-align: center;

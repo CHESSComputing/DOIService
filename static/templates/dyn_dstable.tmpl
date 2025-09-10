@@ -32,7 +32,7 @@ $(document).ready(function() {
     let columns = [];
 
     // Fetch initial data to determine columns and populate the first page
-    fetchData(0, 10, "").then(response => {
+    fetchData(0, 10, "", "", "").then(response => {
         columns = response.columns;
 
         // Create table headers dynamically
@@ -51,7 +51,7 @@ $(document).ready(function() {
     }
 
     // Function to fetch data from the server with optional search parameter
-    function fetchData(startIndex, limit, query) {
+    function fetchData(startIndex, limit, query, sortKey, sortDirection) {
         return $.ajax({
             url: "/search",
             type: "POST",
@@ -59,6 +59,8 @@ $(document).ready(function() {
                 idx: startIndex,
                 limit: limit,
                 query: query,
+                sortKey: sortKey,
+                sortDirection: sortDirection
             },
             dataType: "json",
             headers: {
@@ -74,7 +76,7 @@ $(document).ready(function() {
         $('#dataTable').DataTable({
             data: initialData,
             columns: columns.map(col => ({ data: col, title: toCamelCase(col) }))
-                .concat([{ data: null, title: "DOI", orderable: false, render: function(data, type, row) {
+                .concat([{ data: null, title: "DOI", orderable: true, render: function(data, type, row) {
                     const doiValue = row["doi"] || "";
                     return `
                         <a href="/dois/${doiValue}">${doiValue}</a>
@@ -95,7 +97,7 @@ $(document).ready(function() {
                 const sortDirection = data.order[0].dir; // "asc" or "desc"
 
                 // Fetch data with current pagination and search term
-                fetchData(pageIndex, pageSize, query).then(response => {
+                fetchData(pageIndex, pageSize, query, sortKey, sortDirection).then(response => {
                     callback({
                         recordsTotal: totalRecords,
                         recordsFiltered: response.total,

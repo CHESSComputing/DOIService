@@ -52,7 +52,11 @@ func DOIHandler(c *gin.Context) {
 	if strings.HasPrefix(doi, "/") {
 		doi = strings.TrimPrefix(doi, "/")
 	}
-	records := getRecords(doi, 0, 1)
+	var sortKeys []string
+	sortOrder := 0
+	idx := 0
+	limit := 1
+	records := getRecords(doi, sortKeys, sortOrder, idx, limit)
 	if len(records) != 1 {
 		log.Println("ERROR: too many DOI records", records)
 		rec := services.Response("DOIService", http.StatusBadRequest, services.BindError, errors.New("too many DOI records"))
@@ -150,7 +154,27 @@ func SearchHandler(c *gin.Context) {
 			limit = 10
 		}
 	}
-	records := getRecords(doi, idx, limit)
+	var sortKeys []string
+	skey := c.PostForm("sortKey")
+	if skey != "" {
+		if skey == "doi_type" {
+			sortKeys = []string{"doi_public"}
+		} else {
+			sortKeys = []string{skey}
+		}
+	}
+	var sortOrder int
+	sorder := c.PostForm("sortDirection")
+	if sorder == "asc" {
+		sortOrder = 1
+	} else if sorder == "desc" {
+		sortOrder = -1
+	}
+	if sorder != "" && len(sortKeys) == 0 {
+		// when we have column with DOI links
+		sortKeys = []string{"doi"}
+	}
+	records := getRecords(doi, sortKeys, sortOrder, idx, limit)
 	if c.Request.Header.Get("Accept") == "application/json" {
 		keys := []string{"did", "doi", "doi_public", "doi_provider", "doi_created_at"}
 		cols := []string{"did", "doi_provider", "doi_type"}

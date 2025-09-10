@@ -9,7 +9,7 @@ import (
 )
 
 // getRecords fetches records from the database based on the given doi pattern
-func getRecords(doiPattern string, idx, limit int) []map[string]any {
+func getRecords(doiPattern string, sortKeys []string, sortOrder, idx, limit int) []map[string]any {
 	spec := make(map[string]any)
 	pat := make(map[string]any)
 	if doiPattern != "" {
@@ -24,7 +24,7 @@ func getRecords(doiPattern string, idx, limit int) []map[string]any {
 	}
 	dbname := srvConfig.Config.CHESSMetaData.MongoDB.DBName
 	collname := srvConfig.Config.CHESSMetaData.MongoDB.DBColl
-	return metaDB.Get(dbname, collname, spec, idx, limit)
+	return metaDB.GetSorted(dbname, collname, spec, sortKeys, sortOrder, idx, limit)
 }
 
 // helper function to get Metadata record
