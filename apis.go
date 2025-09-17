@@ -19,7 +19,7 @@ func getRecords(doiPattern string, sortKeys []string, sortOrder, idx, limit int)
 	} else {
 		cond := make(map[string]any)
 		cond["$exists"] = true
-		cond["$ne"] = "\"\""
+		cond["$ne"] = ""
 		spec["doi"] = cond
 	}
 	dbname := srvConfig.Config.CHESSMetaData.MongoDB.DBName
@@ -84,7 +84,7 @@ func countDOIRecords() int {
 	spec := make(map[string]any)
 	cond := make(map[string]any)
 	cond["$exists"] = true
-	cond["$ne"] = "\"\""
+	cond["$ne"] = ""
 	spec["doi"] = cond
 	dbname := srvConfig.Config.CHESSMetaData.MongoDB.DBName
 	collname := srvConfig.Config.CHESSMetaData.MongoDB.DBColl
