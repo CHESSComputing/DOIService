@@ -17,7 +17,7 @@ import (
 	server "github.com/CHESSComputing/golib/server"
 	services "github.com/CHESSComputing/golib/services"
 	"github.com/gin-gonic/gin"
-	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 // helper function to define our header
@@ -107,7 +107,7 @@ func DOIHandler(c *gin.Context) {
 		for _, v := range values {
 			parents = append(parents, v.(string))
 		}
-	case primitive.A: // mongodb return records in this data-type
+	case bson.A: // mongodb return records in this data-type
 		for _, v := range values {
 			parents = append(parents, fmt.Sprintf("%v", v))
 		}
