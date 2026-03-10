@@ -40,6 +40,7 @@ func setupRouter() *gin.Engine {
 	routes := []server.Route{
 		{Method: "GET", Path: "/search", Handler: MainHandler, Authorized: false},
 		{Method: "GET", Path: "/", Handler: DOITableHandler, Authorized: false},
+		{Method: "GET", Path: "/stage-request", Handler: StageRequestHandler, Authorized: false},
 		{Method: "GET", Path: "/doi/*doi", Handler: DOIHandler, Authorized: false},
 		{Method: "GET", Path: "/dois/*doi", Handler: DOIHandler, Authorized: false},
 		{Method: "POST", Path: "/search", Handler: SearchHandler, Authorized: false},
