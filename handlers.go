@@ -150,6 +150,9 @@ func DOIHandler(c *gin.Context) {
 		}
 	}
 	tmpl["Parents"] = parentsRecords
+	tmpl["DID"] = did
+	stageRequest := server.TmplPage(StaticFs, "stage-request.tmpl", tmpl)
+	tmpl["StageRequest"] = stageRequest
 
 	// compose web page content
 	content := server.TmplPage(StaticFs, "doi.tmpl", tmpl)
