@@ -1,26 +1,28 @@
 <section>
 <article>
 
+<h2>FOXDEN staging request form</h2>
+<br/>
+<hr/>
 <form action="{{.Base}}/stage-request" method="post" name="staterequest" id="stagerequest" class="form">
     <div class="form-item">
-        <label>FOXDEN dataset</label>
-        <label class="hint hint-req">Dataset (&#42;)</label>
+        <label class="hint hint-req">FOXDEN Dataset DID (&#42;)</label>
         <input class="input" type="text" value="{{.DID}}" id="did" name="did">
     </div>
     <div class="form-item">
-        <label>Your full name or CLASSE user id</label>
+        <label class="hint hint-req">Your full name or CLASSE user id</label>
         {{if .User}}
-          <input class="hint hint-req" type="text" id="user" name="user" value="{{.User}}">
+          <input class="input" type="text" id="user" name="user" value="{{.User}}">
         {{else}}
-          <input class="hint hint-req" type="text" id="user" name="user">
+          <input class="input" type="text" id="user" name="user">
         {{end}}
     </div>
     <div class="form-item">
-        <label>Your email address</label>
+        <label class="hint hint-req">Your email address</label>
         {{if .Email}}
-          <input class="hint hint-req" type="text" id="email" name="email" value="{{.Email}}">
+          <input class="input" type="text" id="email" name="email" value="{{.Email}}">
         {{else}}
-          <input class="hint hint-req" type="text" id="email" name="email" placeholder="email@abc.com">
+          <input class="input" type="text" id="email" name="email" placeholder="email@abc.com">
         {{end}}
     </div>
     <div class="form-item">

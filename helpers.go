@@ -9,8 +9,8 @@ import (
 // StageRequestForm holds the parsed form fields from the HTML form.
 type StageRequestForm struct {
 	DID   string `form:"did"     binding:"required"`
-	Email string `form:"email"   binding:"required,email"`
-	User  string `form:"user"    binding:"required,user"`
+	Email string `form:"email"   binding:"required"`
+	User  string `form:"user"    binding:"required"`
 }
 
 // EmailConfig holds SMTP configuration. Populate this from your config/env.

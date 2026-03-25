@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 
@@ -258,6 +259,12 @@ func StagePostRequestHandler(c *gin.Context) {
 		return
 	}
 
+	// check if SMTP is configured
+	if srvConfig.Config.DOI.EMailProvider.SMTPHost == "" {
+		emailRedirectHandler(c, form)
+		return
+	}
+
 	// 2. Build the notification email.
 	subject := fmt.Sprintf("[Stage Request] Dataset: %s", form.DID)
 	body := buildEmailBody(form)
@@ -284,4 +291,29 @@ func StagePostRequestHandler(c *gin.Context) {
 			form.DID, form.Email,
 		),
 	})
+}
+
+func emailRedirectHandler(c *gin.Context, form StageRequestForm) {
+	subject := fmt.Sprintf("Request to Stage Dataset %s", form.DID)
+	body := fmt.Sprintf(`Dear IT Team,
+
+I would like to request the staging of the following dataset:
+
+DID: %s
+Requested by: %s
+Contact: %s
+
+Please let me know if any additional information is required.
+
+Best regards,
+%s`, form.DID, form.User, form.Email, form.User)
+
+	mailto := fmt.Sprintf(
+		"mailto:%s?subject=%s&body=%s",
+		url.QueryEscape("service-classe@cornell.edu"),
+		url.QueryEscape(subject),
+		url.QueryEscape(body),
+	)
+
+	http.Redirect(c.Writer, c.Request, mailto, http.StatusSeeOther)
 }
