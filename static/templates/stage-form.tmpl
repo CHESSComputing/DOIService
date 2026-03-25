@@ -9,11 +9,19 @@
     </div>
     <div class="form-item">
         <label>Your full name or CLASSE user id</label>
-        <input class="hint hint-req" type="text" id="user" name="user" value="{{.User}}">
+        {{if .User}}
+          <input class="hint hint-req" type="text" id="user" name="user" value="{{.User}}">
+        {{else}}
+          <input class="hint hint-req" type="text" id="user" name="user">
+        {{end}}
     </div>
     <div class="form-item">
         <label>Your email address</label>
-        <input class="hint hint-req" type="text" id="email" name="email" value="{{.Email}}" placeholder="email@abc.com">
+        {{if .Email}}
+          <input class="hint hint-req" type="text" id="email" name="email" value="{{.Email}}">
+        {{else}}
+          <input class="hint hint-req" type="text" id="email" name="email" placeholder="email@abc.com">
+        {{end}}
     </div>
     <div class="form-item">
         <button class="button button-small button-dark">Submit</button>
