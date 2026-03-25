@@ -295,18 +295,14 @@ func StagePostRequestHandler(c *gin.Context) {
 
 func emailRedirectHandler(c *gin.Context, form StageRequestForm) {
 	subject := fmt.Sprintf("Request to Stage Dataset %s", form.DID)
-	body := fmt.Sprintf(`Dear IT Team,
-
-I would like to request the staging of the following dataset:
-
-DID: %s
-Requested by: %s
-Contact: %s
-
-Please let me know if any additional information is required.
-
-Best regards,
-%s`, form.DID, form.User, form.Email, form.User)
+  body := fmt.Sprintf("Dear IT Team,\r\n\r\n"+
+	"I would like to request the staging of the following dataset:\r\n\r\n"+
+	"DID: %s\r\n"+
+	"Requested by: %s\r\n"+
+	"Contact: %s\r\n\r\n"+
+	"Please let me know if any additional information is required.\r\n\r\n"+
+	"Best regards,\r\n%s",
+	form.DID, form.User, form.Email, form.User)
 
 	mailto := fmt.Sprintf(
 		"mailto:%s?subject=%s&body=%s",
