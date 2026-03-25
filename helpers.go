@@ -8,9 +8,9 @@ import (
 
 // StageRequestForm holds the parsed form fields from the HTML form.
 type StageRequestForm struct {
-	DID      string `form:"did"      binding:"required"`
-	Email    string `form:"email"    binding:"required,email"`
-	Priority string `form:"priority" binding:"required,oneof=low medium urgent"`
+	DID   string `form:"did"     binding:"required"`
+	Email string `form:"email"   binding:"required,email"`
+	User  string `form:"user"    binding:"required,user"`
 }
 
 // EmailConfig holds SMTP configuration. Populate this from your config/env.
@@ -30,8 +30,8 @@ func buildEmailBody(form StageRequestForm) string {
 	sb.WriteString("Details\n")
 	sb.WriteString("-------\n")
 	sb.WriteString(fmt.Sprintf("Dataset (DID) : %s\n", form.DID))
-	sb.WriteString(fmt.Sprintf("Requested by  : %s\n", form.Email))
-	sb.WriteString(fmt.Sprintf("Priority      : %s\n", form.Priority))
+	sb.WriteString(fmt.Sprintf("Requested by  : %s\n", form.User))
+	sb.WriteString(fmt.Sprintf("Email         : %s\n", form.Email))
 	sb.WriteString("\nPlease process this request at your earliest convenience.\n")
 
 	return sb.String()

@@ -67,47 +67,6 @@ func StageRequestHandler(c *gin.Context) {
 	c.Data(http.StatusOK, "text/html; charset=utf-8", []byte(doiheader()+content+footer()))
 }
 
-// StagePostRequestHandler handles POST /stage-request.
-// It validates the form, then sends a notification email to the configured
-// admin address on behalf of the requesting user.
-func StagePostRequestHandler(c *gin.Context) {
-	// 1. Bind and validate form fields.
-	var form StageRequestForm
-	if err := c.ShouldBind(&form); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": fmt.Sprintf("invalid form submission: %s", err.Error()),
-		})
-		return
-	}
-
-	// 2. Build the notification email.
-	subject := fmt.Sprintf("[Stage Request] Dataset: %s | Priority: %s", form.DID, form.Priority)
-	body := buildEmailBody(form)
-
-	// 3. Send the email.
-	emailCfg := EmailConfig{
-		SMTPHost:   srvConfig.Config.DOI.EMailProvider.SMTPHost,
-		SMTPPort:   srvConfig.Config.DOI.EMailProvider.SMTPPort,
-		SenderAddr: srvConfig.Config.DOI.EMailProvider.SenderAddr,
-		SenderPass: srvConfig.Config.DOI.EMailProvider.SenderPass,
-		AdminEmail: srvConfig.Config.DOI.EMailProvider.AdminEmail,
-	}
-	if err := sendEmail(emailCfg, form.Email, subject, body); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": fmt.Sprintf("failed to send staging request email: %s", err.Error()),
-		})
-		return
-	}
-
-	// 4. Respond to the client.
-	c.JSON(http.StatusOK, gin.H{
-		"message": fmt.Sprintf(
-			"Staging request for dataset '%s' submitted successfully. A confirmation will be sent to %s.",
-			form.DID, form.Email,
-		),
-	})
-}
-
 // DOIHandler provides access to GET /DOI/123 end-point
 func DOIHandler(c *gin.Context) {
 	doi := c.Param("doi")
@@ -283,18 +242,43 @@ func SearchHandler(c *gin.Context) {
 	c.Data(http.StatusOK, "text/html; charset=utf-8", []byte(doiheader()+page+footer()))
 }
 
-// StageRequestPostHandler provides access to GET /staging end-point
-func StageRequestPostHandler(c *gin.Context) {
-	did := c.PostForm("did")
-	email := c.PostForm("email")
-	user := c.PostForm("user")
-	// obtain full user name via ClasseInfoService
-	tmpl := server.MakeTmpl(StaticFs, "main")
-	base := srvConfig.Config.DOI.WebServer.Base
-	tmpl["Base"] = base
-	tmpl["DID"] = did
-	tmpl["Email"] = email
-	tmpl["User"] = user
-	content := server.TmplPage(StaticFs, "stage-email.tmpl", tmpl)
-	c.Data(http.StatusOK, "text/html; charset=utf-8", []byte(doiheader()+content+footer()))
+// StagePostRequestHandler handles POST /stage-request.
+// It validates the form, then sends a notification email to the configured
+// admin address on behalf of the requesting user.
+func StagePostRequestHandler(c *gin.Context) {
+	// 1. Bind and validate form fields.
+	var form StageRequestForm
+	if err := c.ShouldBind(&form); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": fmt.Sprintf("invalid form submission: %s", err.Error()),
+		})
+		return
+	}
+
+	// 2. Build the notification email.
+	subject := fmt.Sprintf("[Stage Request] Dataset: %s", form.DID)
+	body := buildEmailBody(form)
+
+	// 3. Send the email.
+	emailCfg := EmailConfig{
+		SMTPHost:   srvConfig.Config.DOI.EMailProvider.SMTPHost,
+		SMTPPort:   srvConfig.Config.DOI.EMailProvider.SMTPPort,
+		SenderAddr: srvConfig.Config.DOI.EMailProvider.SenderAddr,
+		SenderPass: srvConfig.Config.DOI.EMailProvider.SenderPass,
+		AdminEmail: srvConfig.Config.DOI.EMailProvider.AdminEmail,
+	}
+	if err := sendEmail(emailCfg, form.Email, subject, body); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": fmt.Sprintf("failed to send staging request email: %s", err.Error()),
+		})
+		return
+	}
+
+	// 4. Respond to the client.
+	c.JSON(http.StatusOK, gin.H{
+		"message": fmt.Sprintf(
+			"Staging request for dataset '%s' submitted successfully. A confirmation will be sent to %s.",
+			form.DID, form.Email,
+		),
+	})
 }
