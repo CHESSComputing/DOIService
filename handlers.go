@@ -44,14 +44,26 @@ func MainHandler(c *gin.Context) {
 	c.Data(http.StatusOK, "text/html; charset=utf-8", []byte(doiheader()+content+footer()))
 }
 
+// DOITableHandler provides access to GET /dstable endpoint
+func DOITableHandler(c *gin.Context) {
+	tmpl := server.MakeTmpl(StaticFs, "CHESS DOI records")
+	tmpl["Base"] = srvConfig.Config.DOI.WebServer.Base
+	tmpl["NSchemas"] = len(srvConfig.Config.CHESSMetaData.SchemaFiles)
+	tmpl["NMetaRecords"] = countMetaRecords()
+	tmpl["NDOIRecords"] = countDOIRecords()
+	content := server.TmplPage(StaticFs, "dyn_dstable.tmpl", tmpl)
+	c.Data(http.StatusOK, "text/html; charset=utf-8", []byte(doiheader()+content+footer()))
+}
+
 // StageRequestHandler provides access to GET /staging end-point
 func StageRequestHandler(c *gin.Context) {
 	tmpl := server.MakeTmpl(StaticFs, "main")
 	base := srvConfig.Config.DOI.WebServer.Base
-	did := c.Param("did")
+	// I can obtain user's email via ClasseInfoService and use cookie from FOXDEN frontend.
+	did := c.Query("did")
 	tmpl["Base"] = base
 	tmpl["DID"] = did
-	content := server.TmplPage(StaticFs, "stage.tmpl", tmpl)
+	content := server.TmplPage(StaticFs, "stage-form.tmpl", tmpl)
 	c.Data(http.StatusOK, "text/html; charset=utf-8", []byte(doiheader()+content+footer()))
 }
 
@@ -271,13 +283,18 @@ func SearchHandler(c *gin.Context) {
 	c.Data(http.StatusOK, "text/html; charset=utf-8", []byte(doiheader()+page+footer()))
 }
 
-// DOITableHandler provides access to GET /dstable endpoint
-func DOITableHandler(c *gin.Context) {
-	tmpl := server.MakeTmpl(StaticFs, "CHESS DOI records")
-	tmpl["Base"] = srvConfig.Config.DOI.WebServer.Base
-	tmpl["NSchemas"] = len(srvConfig.Config.CHESSMetaData.SchemaFiles)
-	tmpl["NMetaRecords"] = countMetaRecords()
-	tmpl["NDOIRecords"] = countDOIRecords()
-	content := server.TmplPage(StaticFs, "dyn_dstable.tmpl", tmpl)
+// StageRequestPostHandler provides access to GET /staging end-point
+func StageRequestPostHandler(c *gin.Context) {
+	did := c.PostForm("did")
+	email := c.PostForm("email")
+	user := c.PostForm("user")
+	// obtain full user name via ClasseInfoService
+	tmpl := server.MakeTmpl(StaticFs, "main")
+	base := srvConfig.Config.DOI.WebServer.Base
+	tmpl["Base"] = base
+	tmpl["DID"] = did
+	tmpl["Email"] = email
+	tmpl["User"] = user
+	content := server.TmplPage(StaticFs, "stage-email.tmpl", tmpl)
 	c.Data(http.StatusOK, "text/html; charset=utf-8", []byte(doiheader()+content+footer()))
 }
