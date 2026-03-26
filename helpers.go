@@ -1,8 +1,11 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"net/smtp"
+	"os"
+	"os/exec"
 	"strings"
 )
 
@@ -15,11 +18,12 @@ type StageRequestForm struct {
 
 // EmailConfig holds SMTP configuration. Populate this from your config/env.
 type EmailConfig struct {
-	SMTPHost   string
-	SMTPPort   int
-	SenderAddr string
-	SenderPass string
-	AdminEmail string // the team/admin address that receives staging requests
+	SMTPHost       string
+	SMTPPort       int
+	SenderAddr     string
+	SenderPass     string
+	RecepientEmail string
+	SendmailPath   string
 }
 
 // buildEmailBody constructs a plain-text email body from the form data.
@@ -37,22 +41,50 @@ func buildEmailBody(form StageRequestForm) string {
 	return sb.String()
 }
 
-// sendEmail sends a plain-text email via SMTP.
-// The From header is set to senderAddr; Reply-To is set to the user's email
-// so replies go back to the requester, not the system account.
-func sendEmail(cfg EmailConfig, replyTo, subject, body string) error {
-	auth := smtp.PlainAuth("", cfg.SenderAddr, cfg.SenderPass, cfg.SMTPHost)
+// sendEmail sends a plain-text email either via Sendmail or SMTP server
+func sendEmail(cfg EmailConfig, subject, body string) error {
+	if _, err := os.Stat(cfg.SendmailPath); err == nil {
+		return sendEmailSendmail(cfg, subject, body)
+	}
+	return sendEmailViaSMTP(cfg, subject, body)
+}
+
+// helper function to send email via SMTP relay
+func sendEmailViaSMTP(cfg EmailConfig, subject, body string) error {
+	addr := fmt.Sprintf("%s:%d", cfg.SMTPHost, cfg.SMTPPort)
 
 	headers := fmt.Sprintf(
-		"From: %s\r\nTo: %s\r\nReply-To: %s\r\nSubject: %s\r\nMIME-Version: 1.0\r\nContent-Type: text/plain; charset=UTF-8\r\n\r\n",
+		"From: %s\r\nTo: %s\r\nSubject: %s\r\nMIME-Version: 1.0\r\nContent-Type: text/plain; charset=UTF-8\r\n\r\n",
 		cfg.SenderAddr,
-		cfg.AdminEmail,
-		replyTo,
+		cfg.RecepientEmail,
 		subject,
 	)
 
 	message := []byte(headers + body)
 
-	addr := fmt.Sprintf("%s:%d", cfg.SMTPHost, cfg.SMTPPort)
-	return smtp.SendMail(addr, auth, cfg.SenderAddr, []string{cfg.AdminEmail}, message)
+	// Only use auth if password is provided
+	if cfg.SenderPass != "" {
+		auth := smtp.PlainAuth("", cfg.SenderAddr, cfg.SenderPass, cfg.SMTPHost)
+		return smtp.SendMail(addr, auth, cfg.SenderAddr, []string{cfg.RecepientEmail}, message)
+	}
+
+	// No auth (like sendmail behavior)
+	return smtp.SendMail(addr, nil, cfg.SenderAddr, []string{cfg.RecepientEmail}, message)
+}
+
+// helper function to send email via external tool, e.g. sendmail
+func sendEmailSendmail(cfg EmailConfig, subject, body string) error {
+	var msg bytes.Buffer
+
+	msg.WriteString(fmt.Sprintf("From: %s\n", cfg.SenderAddr))
+	msg.WriteString(fmt.Sprintf("To: %s\n", cfg.RecepientEmail))
+	msg.WriteString(fmt.Sprintf("Subject: %s\n", subject))
+	msg.WriteString("MIME-Version: 1.0\n")
+	msg.WriteString("Content-Type: text/plain; charset=UTF-8\n\n")
+	msg.WriteString(body)
+
+	cmd := exec.Command(cfg.SendmailPath, "-oi")
+	cmd.Stdin = &msg
+
+	return cmd.Run()
 }

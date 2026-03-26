@@ -250,7 +250,7 @@ func SearchHandler(c *gin.Context) {
 // It validates the form, then sends a notification email to the configured
 // admin address on behalf of the requesting user.
 func StagePostRequestHandler(c *gin.Context) {
-	// 1. Bind and validate form fields.
+	// Bind and validate form fields.
 	var form StageRequestForm
 	if err := c.ShouldBind(&form); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -260,31 +260,37 @@ func StagePostRequestHandler(c *gin.Context) {
 	}
 
 	// check if SMTP is configured
-	if srvConfig.Config.DOI.EMailProvider.SMTPHost == "" {
+	if srvConfig.Config.DOI.EMailProvider.SMTPHost == "" && srvConfig.Config.DOI.EMailProvider.SendmailPath == "" {
 		emailRedirectHandler(c, form)
 		return
 	}
 
-	// 2. Build the notification email.
+	// Build the notification email.
 	subject := fmt.Sprintf("[Stage Request] Dataset: %s", form.DID)
 	body := buildEmailBody(form)
 
-	// 3. Send the email.
+	// TODO: find recepientEmail from did btr, I need to find
+	// staff scientists based on btr, at the moment we send email
+	// to sender itself
+	recepientEmail := form.Email
+
+	// Send the email.
 	emailCfg := EmailConfig{
-		SMTPHost:   srvConfig.Config.DOI.EMailProvider.SMTPHost,
-		SMTPPort:   srvConfig.Config.DOI.EMailProvider.SMTPPort,
-		SenderAddr: srvConfig.Config.DOI.EMailProvider.SenderAddr,
-		SenderPass: srvConfig.Config.DOI.EMailProvider.SenderPass,
-		AdminEmail: srvConfig.Config.DOI.EMailProvider.AdminEmail,
+		SMTPHost:       srvConfig.Config.DOI.EMailProvider.SMTPHost,
+		SMTPPort:       srvConfig.Config.DOI.EMailProvider.SMTPPort,
+		SenderAddr:     form.Email,
+		SenderPass:     srvConfig.Config.DOI.EMailProvider.SenderPass,
+		RecepientEmail: recepientEmail,
+		SendmailPath:   srvConfig.Config.DOI.EMailProvider.SendmailPath,
 	}
-	if err := sendEmail(emailCfg, form.Email, subject, body); err != nil {
+	if err := sendEmail(emailCfg, subject, body); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": fmt.Sprintf("failed to send staging request email: %s", err.Error()),
 		})
 		return
 	}
 
-	// 4. Respond to the client.
+	// Respond to the client.
 	c.JSON(http.StatusOK, gin.H{
 		"message": fmt.Sprintf(
 			"Staging request for dataset '%s' submitted successfully. A confirmation will be sent to %s.",
@@ -293,16 +299,17 @@ func StagePostRequestHandler(c *gin.Context) {
 	})
 }
 
+// helper function to redirect email to OS client
 func emailRedirectHandler(c *gin.Context, form StageRequestForm) {
 	subject := fmt.Sprintf("Request to Stage Dataset %s", form.DID)
-  body := fmt.Sprintf("Dear IT Team,\r\n\r\n"+
-	"I would like to request the staging of the following dataset:\r\n\r\n"+
-	"DID: %s\r\n"+
-	"Requested by: %s\r\n"+
-	"Contact: %s\r\n\r\n"+
-	"Please let me know if any additional information is required.\r\n\r\n"+
-	"Best regards,\r\n%s",
-	form.DID, form.User, form.Email, form.User)
+	body := fmt.Sprintf("Dear IT Team,\r\n\r\n"+
+		"I would like to request the staging of the following dataset:\r\n\r\n"+
+		"DID: %s\r\n"+
+		"Requested by: %s\r\n"+
+		"Contact: %s\r\n\r\n"+
+		"Please let me know if any additional information is required.\r\n\r\n"+
+		"Best regards,\r\n%s",
+		form.DID, form.User, form.Email, form.User)
 
 	mailto := fmt.Sprintf(
 		"mailto:%s?subject=%s&body=%s",
