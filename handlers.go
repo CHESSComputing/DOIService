@@ -62,8 +62,10 @@ func StageRequestHandler(c *gin.Context) {
 	base := srvConfig.Config.DOI.WebServer.Base
 	// I can obtain user's email via ClasseInfoService and use cookie from FOXDEN frontend.
 	did := c.Query("did")
+	doi := c.Query("doi")
 	tmpl["Base"] = base
 	tmpl["DID"] = did
+	tmpl["DOI"] = doi
 	content := server.TmplPage(StaticFs, "stage-form.tmpl", tmpl)
 	c.Data(http.StatusOK, "text/html; charset=utf-8", []byte(doiheader()+content+footer()))
 }
@@ -152,6 +154,8 @@ func DOIHandler(c *gin.Context) {
 	}
 	tmpl["Parents"] = parentsRecords
 	tmpl["DID"] = did
+	tmpl["DIDEsc"] = url.QueryEscape(did)
+	tmpl["DOIEsc"] = url.QueryEscape(doi)
 	stageRequest := server.TmplPage(StaticFs, "stage-request.tmpl", tmpl)
 	tmpl["StageRequest"] = stageRequest
 
