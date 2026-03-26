@@ -84,7 +84,7 @@ func sendEmailSendmail(cfg EmailConfig, subject, body string) error {
 	msg.WriteString("Content-Type: text/plain; charset=UTF-8\n\n")
 	msg.WriteString(body)
 
-	log.Printf("INFO: send staging request:\n%s\n", cfg)
+	log.Printf("INFO: send staging request:\n%+v\n%v", cfg, body)
 	var stderr bytes.Buffer
 	cmd := exec.Command(cfg.SendmailPath, "-t", "-oi", "-f", cfg.SenderAddr)
 	cmd.Stdin = &msg
@@ -94,5 +94,6 @@ func sendEmailSendmail(cfg EmailConfig, subject, body string) error {
 	if err != nil {
 		return fmt.Errorf("sendmail failed: %v: %s", err, stderr.String())
 	}
+	log.Printf("INFO: stdin=%s stderr=%s\n", cmd.Stdin, cmd.Stderr)
 	return nil
 }
