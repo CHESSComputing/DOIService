@@ -283,20 +283,35 @@ func StagePostRequestHandler(c *gin.Context) {
 		RecepientEmail: recepientEmail,
 		SendmailPath:   srvConfig.Config.DOI.EMailProvider.SendmailPath,
 	}
+
+	tmpl := server.MakeTmpl(StaticFs, "main")
+	base := srvConfig.Config.DOI.WebServer.Base
+	tmpl["Base"] = base
+
 	if err := sendEmail(emailCfg, subject, body); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": fmt.Sprintf("failed to send staging request email: %s", err.Error()),
-		})
+		/*
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": fmt.Sprintf("failed to send staging request email: %s", err.Error()),
+			})
+		*/
+		tmpl["Content"] = fmt.Sprintf("failed to send staging request email: %s", err.Error())
+		page := server.TmplPage(StaticFs, "error.tmpl", tmpl)
+		c.Data(http.StatusOK, "text/html; charset=utf-8", []byte(doiheader()+page+footer()))
 		return
 	}
 
 	// Respond to the client.
-	c.JSON(http.StatusOK, gin.H{
-		"message": fmt.Sprintf(
-			"Staging request for dataset '%s' submitted successfully. A confirmation will be sent to %s.",
-			form.DID, form.Email,
-		),
-	})
+	/*
+		c.JSON(http.StatusOK, gin.H{
+			"message": fmt.Sprintf(
+				"Staging request for dataset '%s' submitted successfully. A confirmation will be sent to %s.",
+				form.DID, form.Email,
+			),
+		})
+	*/
+	tmpl["Content"] = fmt.Sprintf("Staging request for dataset '%s' submitted successfully. A confirmation will be sent to %s.", form.DID, form.Email)
+	page := server.TmplPage(StaticFs, "success.tmpl", tmpl)
+	c.Data(http.StatusOK, "text/html; charset=utf-8", []byte(doiheader()+page+footer()))
 }
 
 // helper function to redirect email to OS client

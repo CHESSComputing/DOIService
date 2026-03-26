@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"fmt"
+	"log"
 	"net/smtp"
 	"os"
 	"os/exec"
@@ -83,8 +84,15 @@ func sendEmailSendmail(cfg EmailConfig, subject, body string) error {
 	msg.WriteString("Content-Type: text/plain; charset=UTF-8\n\n")
 	msg.WriteString(body)
 
-	cmd := exec.Command(cfg.SendmailPath, "-oi")
+	log.Printf("INFO: send staging request:\n%s\n", cfg)
+	var stderr bytes.Buffer
+	cmd := exec.Command(cfg.SendmailPath, "-t", "-oi", "-f", cfg.SenderAddr)
 	cmd.Stdin = &msg
+	cmd.Stderr = &stderr
 
-	return cmd.Run()
+	err := cmd.Run()
+	if err != nil {
+		return fmt.Errorf("sendmail failed: %v: %s", err, stderr.String())
+	}
+	return nil
 }
