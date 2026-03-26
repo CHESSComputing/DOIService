@@ -94,6 +94,5 @@ func sendEmailSendmail(cfg EmailConfig, subject, body string) error {
 	if err != nil {
 		return fmt.Errorf("sendmail failed: %v: %s", err, stderr.String())
 	}
-	log.Printf("INFO: stdin=%s stderr=%s\n", cmd.Stdin, cmd.Stderr)
 	return nil
 }

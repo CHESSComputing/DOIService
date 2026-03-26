@@ -278,7 +278,7 @@ func StagePostRequestHandler(c *gin.Context) {
 	emailCfg := EmailConfig{
 		SMTPHost:       srvConfig.Config.DOI.EMailProvider.SMTPHost,
 		SMTPPort:       srvConfig.Config.DOI.EMailProvider.SMTPPort,
-		SenderAddr:     form.Email,
+		SenderAddr:     fmt.Sprintf("%s@classe.cornell.edu", form.User),
 		SenderPass:     srvConfig.Config.DOI.EMailProvider.SenderPass,
 		RecepientEmail: recepientEmail,
 		SendmailPath:   srvConfig.Config.DOI.EMailProvider.SendmailPath,
