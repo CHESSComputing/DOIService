@@ -20,12 +20,12 @@ type StageRequestForm struct {
 
 // EmailConfig holds SMTP configuration. Populate this from your config/env.
 type EmailConfig struct {
-	SMTPHost       string
-	SMTPPort       int
-	SenderAddr     string
-	SenderPass     string
-	RecepientEmail string
-	SendmailPath   string
+	SMTPHost        string
+	SMTPPort        int
+	SenderAddr      string
+	SenderPass      string
+	SendmailPath    string
+	RecepientEmails []string
 }
 
 // buildEmailBody constructs a plain-text email body from the form data.
@@ -59,7 +59,7 @@ func sendEmailViaSMTP(cfg EmailConfig, subject, body string) error {
 	headers := fmt.Sprintf(
 		"From: %s\r\nTo: %s\r\nSubject: %s\r\nMIME-Version: 1.0\r\nContent-Type: text/plain; charset=UTF-8\r\n\r\n",
 		cfg.SenderAddr,
-		cfg.RecepientEmail,
+		strings.Join(cfg.RecepientEmails, ", "),
 		subject,
 	)
 
@@ -68,19 +68,21 @@ func sendEmailViaSMTP(cfg EmailConfig, subject, body string) error {
 	// Only use auth if password is provided
 	if cfg.SenderPass != "" {
 		auth := smtp.PlainAuth("", cfg.SenderAddr, cfg.SenderPass, cfg.SMTPHost)
-		return smtp.SendMail(addr, auth, cfg.SenderAddr, []string{cfg.RecepientEmail}, message)
+		return smtp.SendMail(addr, auth, cfg.SenderAddr, cfg.RecepientEmails, message)
 	}
 
 	// No auth (like sendmail behavior)
-	return smtp.SendMail(addr, nil, cfg.SenderAddr, []string{cfg.RecepientEmail}, message)
+	return smtp.SendMail(addr, nil, cfg.SenderAddr, cfg.RecepientEmails, message)
 }
 
 // helper function to send email via external tool, e.g. sendmail
 func sendEmailSendmail(cfg EmailConfig, subject, body string) error {
 	var msg bytes.Buffer
 
+	toHeader := strings.Join(cfg.RecepientEmails, ", ")
+
 	msg.WriteString(fmt.Sprintf("From: %s\n", cfg.SenderAddr))
-	msg.WriteString(fmt.Sprintf("To: %s\n", cfg.RecepientEmail))
+	msg.WriteString(fmt.Sprintf("To: %s\n", toHeader))
 	msg.WriteString(fmt.Sprintf("Subject: %s\n", subject))
 	msg.WriteString("MIME-Version: 1.0\n")
 	msg.WriteString("Content-Type: text/plain; charset=UTF-8\n\n")

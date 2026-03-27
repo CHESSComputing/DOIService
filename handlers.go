@@ -269,53 +269,51 @@ func StagePostRequestHandler(c *gin.Context) {
 		return
 	}
 
-	// Build the notification email.
-	subject := fmt.Sprintf("[Stage Request] Dataset: %s", form.DID)
-	body := buildEmailBody(form)
-
-	// TODO: find recepientEmail from did btr, I need to find
-	// staff scientists based on btr, at the moment we send email
-	// to sender itself
-	recepientEmail := form.Email
-
-	// Send the email.
-	emailCfg := EmailConfig{
-		SMTPHost:       srvConfig.Config.DOI.EMailProvider.SMTPHost,
-		SMTPPort:       srvConfig.Config.DOI.EMailProvider.SMTPPort,
-		SenderAddr:     fmt.Sprintf("%s@classe.cornell.edu", form.User),
-		SenderPass:     srvConfig.Config.DOI.EMailProvider.SenderPass,
-		RecepientEmail: recepientEmail,
-		SendmailPath:   srvConfig.Config.DOI.EMailProvider.SendmailPath,
-	}
-
+	// prepare return template
 	tmpl := server.MakeTmpl(StaticFs, "main")
 	base := srvConfig.Config.DOI.WebServer.Base
 	tmpl["Base"] = base
 
+	// find emails of beam scientists associated with that did
+	emails := didEmails(form.DID)
+	if len(emails) == 0 {
+		tmpl["Content"] = fmt.Sprintf("unable to find CLASSE emails associated with did=%s", form.DID)
+		page := server.TmplPage(StaticFs, "error.tmpl", tmpl)
+		c.Data(http.StatusBadRequest,
+			"text/html; charset=utf-8",
+			[]byte(doiheader()+page+footer()))
+		return
+	}
+
+	// Build the notification email.
+	subject := fmt.Sprintf("[Stage Request] Dataset: %s", form.DID)
+	body := buildEmailBody(form)
+
+	// Send the email.
+	emailCfg := EmailConfig{
+		SMTPHost:        srvConfig.Config.DOI.EMailProvider.SMTPHost,
+		SMTPPort:        srvConfig.Config.DOI.EMailProvider.SMTPPort,
+		SenderAddr:      fmt.Sprintf("%s@classe.cornell.edu", form.User),
+		SenderPass:      srvConfig.Config.DOI.EMailProvider.SenderPass,
+		RecepientEmails: emails,
+		SendmailPath:    srvConfig.Config.DOI.EMailProvider.SendmailPath,
+	}
+
 	if err := sendEmail(emailCfg, subject, body); err != nil {
-		/*
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"error": fmt.Sprintf("failed to send staging request email: %s", err.Error()),
-			})
-		*/
 		tmpl["Content"] = fmt.Sprintf("failed to send staging request email: %s", err.Error())
 		page := server.TmplPage(StaticFs, "error.tmpl", tmpl)
-		c.Data(http.StatusOK, "text/html; charset=utf-8", []byte(doiheader()+page+footer()))
+		c.Data(http.StatusBadRequest,
+			"text/html; charset=utf-8",
+			[]byte(doiheader()+page+footer()))
 		return
 	}
 
 	// Respond to the client.
-	/*
-		c.JSON(http.StatusOK, gin.H{
-			"message": fmt.Sprintf(
-				"Staging request for dataset '%s' submitted successfully. A confirmation will be sent to %s.",
-				form.DID, form.Email,
-			),
-		})
-	*/
 	tmpl["Content"] = fmt.Sprintf("Staging request for dataset '%s' submitted successfully. A confirmation will be sent to %s.", form.DID, form.Email)
 	page := server.TmplPage(StaticFs, "success.tmpl", tmpl)
-	c.Data(http.StatusOK, "text/html; charset=utf-8", []byte(doiheader()+page+footer()))
+	c.Data(http.StatusOK,
+		"text/html; charset=utf-8",
+		[]byte(doiheader()+page+footer()))
 }
 
 // helper function to redirect email to OS client
