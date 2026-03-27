@@ -33,7 +33,7 @@ func didEmails(did string) []string {
 			srvConfig.Config.LDAP.BaseDN,
 			name, "cn", attributes)
 		if err != nil {
-			log.Printf("[golib.DOIService.didEmails] c.ldapCache.Search error: %w", err)
+			log.Printf("ERROR: ldap.SearchBy cn=%s error: %v", name, err)
 			continue
 		}
 		for _, rec := range entry.Entries {
