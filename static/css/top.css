@@ -18,17 +18,23 @@ header {
   text-align: center;
 }
 article {
+  float: left;
   padding-top: 10px;
   padding-bottom: 10px;
   padding-left: 300px;
   padding-right: 300px;
   background-color: #ffffff;
   width:100%;
-  min-height: 650px;
+  min-height: 700px;
 }
 article.wide {
   padding-left: 100px;
   padding-right: 100px;
+}
+
+article.narrow {
+  padding-left: 300px;
+  padding-right: 300px;
 }
 
 footer {
