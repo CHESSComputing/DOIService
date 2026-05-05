@@ -13,7 +13,10 @@
         <input class="input" type="text" value="{{.DOI}}" id="doi" name="doi">
     </div>
     <div class="form-item">
-        <label class="hint hint-req">Your CLASSE user id</label>
+        <label class="hint hint-req">
+        Your CLASSE user ID. If you do not have CLASSE ID please contact staff scientists
+        from your beamline or send request to service-classe@cornell.edu
+        </label>
         {{if .User}}
           <input class="input" type="text" id="user" name="user" value="{{.User}}">
         {{else}}
