@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"html/template"
 	"log"
 	"net/http"
 	"net/url"
@@ -157,7 +158,7 @@ func DOIHandler(c *gin.Context) {
 	tmpl["DIDEsc"] = url.QueryEscape(did)
 	tmpl["DOIEsc"] = url.QueryEscape(doi)
 	stageRequest := server.TmplPage(StaticFs, "stage-request.tmpl", tmpl)
-	tmpl["StageRequest"] = stageRequest
+	tmpl["StageRequest"] = template.HTML(stageRequest)
 
 	// compose web page content
 	content := server.TmplPage(StaticFs, "doi.tmpl", tmpl)
