@@ -1,11 +1,11 @@
 module github.com/CHESSComputing/DOIService
 
-go 1.26.3
+go 1.26.4
 
 require (
-	github.com/CHESSComputing/golib v1.3.1
+	github.com/CHESSComputing/golib v1.3.3
 	github.com/gin-gonic/gin v1.12.0
-	go.mongodb.org/mongo-driver/v2 v2.6.0
+	go.mongodb.org/mongo-driver/v2 v2.7.0
 )
 
 require (
