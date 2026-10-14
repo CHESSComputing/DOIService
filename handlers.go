@@ -76,8 +76,8 @@ func DOIHandler(c *gin.Context) {
 	doi := c.Param("doi")
 
 	// the URI param contains slash prefix which we should strip off
-	if strings.HasPrefix(doi, "/") {
-		doi = strings.TrimPrefix(doi, "/")
+	if after, ok := strings.CutPrefix(doi, "/"); ok {
+		doi = after
 	}
 	var sortKeys []string
 	sortOrder := 0
@@ -222,8 +222,9 @@ func SearchHandler(c *gin.Context) {
 		return
 	}
 	base := srvConfig.Config.DOI.WebServer.Base
-	content := "<table class=\"table table-striped\">"
-	content += "<th><b>DID</b></th><th><b>Type</b></th><th><b>Provider</b></th><th><b>Description</b></th><th><b>DOI link</b></th>"
+	var content strings.Builder
+	content.WriteString("<table class=\"table table-striped\">")
+	content.WriteString("<th><b>DID</b></th><th><b>Type</b></th><th><b>Provider</b></th><th><b>Description</b></th><th><b>DOI link</b></th>")
 	for _, r := range records {
 		rtype := "Draft"
 		if v, ok := r["doi_public"]; ok {
@@ -239,14 +240,14 @@ func SearchHandler(c *gin.Context) {
 		tmpl["Rlink"] = rlink
 		tmpl["Provider"] = r["doi_provider"]
 		tmpl["Description"] = r["description"]
-		content += server.TmplPage(StaticFs, "row.tmpl", tmpl)
+		content.WriteString(server.TmplPage(StaticFs, "row.tmpl", tmpl))
 	}
-	content += "</table>"
+	content.WriteString("</table>")
 
 	tmpl := server.MakeTmpl(StaticFs, "doi")
 	tmpl["Base"] = base
 	tmpl["Query"] = doi
-	tmpl["Content"] = content
+	tmpl["Content"] = content.String()
 	page := server.TmplPage(StaticFs, "records.tmpl", tmpl)
 	c.Data(http.StatusOK, "text/html; charset=utf-8", []byte(doiheader()+page+footer()))
 }
